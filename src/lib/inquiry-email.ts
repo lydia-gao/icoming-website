@@ -18,8 +18,14 @@ export type InquiryEmailItem = {
     sizeBytes: number;
     kind?: string;
     storagePath: string;
+    /** Pre-signed Supabase Storage URL for sales download. Typically
+     *  valid for 7 days from send time. */
+    signedUrl?: string;
   }>;
 };
+
+/** How long signed attachment URLs in the sales email stay valid. */
+export const SIGNED_URL_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days
 
 export type InquiryEmailData = {
   requestId: string;
@@ -127,10 +133,13 @@ function buildTextBody(d: InquiryEmailData): string {
       if (item.uploads && item.uploads.length > 0) {
         lines.push(`     Attachments:`);
         item.uploads.forEach((u) => {
-          const kb = Math.round(u.sizeBytes / 1024);
+          const size = formatSize(u.sizeBytes);
           lines.push(
-            `       - ${u.originalFilename} (${u.kind ?? "file"}, ${kb} KB)`,
+            `       - ${u.originalFilename} (${u.kind ?? "file"}, ${size})`,
           );
+          if (u.signedUrl) {
+            lines.push(`         Download: ${u.signedUrl}`);
+          }
         });
       }
     });
@@ -140,11 +149,19 @@ function buildTextBody(d: InquiryEmailData): string {
     lines.push("MESSAGE");
     lines.push(d.message);
   }
+  if (hasAnyAttachments(d.items)) {
+    lines.push("");
+    lines.push(`Note: attachment download links valid for 7 days from send time.`);
+  }
   if (d.adminUrl) {
     lines.push("");
     lines.push(`Admin view: ${d.adminUrl}`);
   }
   return lines.join("\n");
+}
+
+function hasAnyAttachments(items: InquiryEmailItem[]): boolean {
+  return items.some((i) => (i.uploads?.length ?? 0) > 0);
 }
 
 function buildHtmlBody(d: InquiryEmailData): string {
@@ -200,9 +217,12 @@ function buildHtmlBody(d: InquiryEmailData): string {
         );
         rows.push(`<ul style="padding-left:16px;font-size:13px;margin:2px 0">`);
         for (const u of item.uploads) {
-          const kb = Math.round(u.sizeBytes / 1024);
+          const size = formatSize(u.sizeBytes);
+          const filenameCell = u.signedUrl
+            ? `<a href="${escapeAttr(u.signedUrl)}" style="color:#3d5534;text-decoration:underline">${escape(u.originalFilename)}</a>`
+            : escape(u.originalFilename);
           rows.push(
-            `<li>${escape(u.originalFilename)} <span style="color:#888">(${escape(u.kind ?? "file")}, ${kb} KB)</span></li>`,
+            `<li>${filenameCell} <span style="color:#888">(${escape(u.kind ?? "file")}, ${escape(size)})</span></li>`,
           );
         }
         rows.push(`</ul>`);
@@ -219,6 +239,12 @@ function buildHtmlBody(d: InquiryEmailData): string {
     );
   }
 
+  if (hasAnyAttachments(d.items)) {
+    rows.push(
+      `<p style="margin:16px 0 0;color:#888;font-size:12px;font-style:italic">Attachment download links valid for 7 days from send time.</p>`,
+    );
+  }
+
   if (d.adminUrl) {
     rows.push(
       `<p style="margin:24px 0 0"><a href="${escapeAttr(d.adminUrl)}" style="background:#3d5534;color:#fff;padding:10px 16px;border-radius:999px;text-decoration:none;font-size:13px">Open in admin →</a></p>`,
@@ -230,6 +256,12 @@ function buildHtmlBody(d: InquiryEmailData): string {
 
 function row(label: string, value: string): string {
   return `<tr><td style="color:#888;padding-right:12px">${escape(label)}</td><td>${value}</td></tr>`;
+}
+
+function formatSize(bytes: number): string {
+  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  if (bytes >= 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${bytes} B`;
 }
 
 function escape(s: string): string {

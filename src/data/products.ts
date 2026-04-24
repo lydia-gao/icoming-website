@@ -39,7 +39,7 @@ export const products: Product[] = [
       { minQty: 500, maxQty: 999, unitPrice: "$0.95" },
       { minQty: 1000, unitPrice: "$0.78" },
     ],
-    sizes: ["Standard 38×42 cm", "Large 40×45 cm"],
+    sizes: ["Standard 38 x 42 cm", "Large 40 x 45 cm"],
     colors: [
       { name: "Natural", hex: "#F0E6D2" },
       { name: "Black", hex: "#1A1A1A" },
@@ -56,7 +56,7 @@ export const products: Product[] = [
         description:
           "零售品牌、活动赠品及可持续推广的常备款。本色与黑色为常备色,定制订单可按 Pantone 精准对色。印刷方式包括丝印、数码、热转印和刺绣。可选增加加宽底、内袋及拉链封口。",
         moq: "100 件",
-        sizes: ["标准 38×42 cm", "加大 40×45 cm"],
+        sizes: ["标准 38 x 42 cm", "加大 40 x 45 cm"],
         colors: [
           { name: "本色", hex: "#F0E6D2" },
           { name: "黑色", hex: "#1A1A1A" },
@@ -91,7 +91,7 @@ export const products: Product[] = [
       { minQty: 1000, maxQty: 4999, unitPrice: "$0.62" },
       { minQty: 5000, unitPrice: "$0.48" },
     ],
-    sizes: ["Standard 35×40 cm", "Large 40×45 cm"],
+    sizes: ["Standard 35 x 40 cm", "Large 40 x 45 cm"],
     colors: [
       { name: "Natural", hex: "#E8DFC9" },
       { name: "Sand", hex: "#C5A87B" },
@@ -106,7 +106,7 @@ export const products: Product[] = [
         description:
           "采用纺织废料中回收的再生棉纤维织造。表面略带纹理,印刷着色效果出色。适合书店、咖啡馆及环保型零售。可平铺包装,降低运费。",
         moq: "200 件",
-        sizes: ["标准 35×40 cm", "加大 40×45 cm"],
+        sizes: ["标准 35 x 40 cm", "加大 40 x 45 cm"],
         colors: [
           { name: "本色", hex: "#E8DFC9" },
           { name: "砂色", hex: "#C5A87B" },
@@ -139,7 +139,7 @@ export const products: Product[] = [
       { minQty: 500, maxQty: 1999, unitPrice: "$1.45" },
       { minQty: 2000, unitPrice: "$1.18" },
     ],
-    sizes: ["Standard 35×45 cm", "Large 40×50 cm"],
+    sizes: ["Standard 35 x 45 cm", "Large 40 x 50 cm"],
     colors: [
       { name: "Black", hex: "#141414" },
       { name: "Navy", hex: "#1F3A5F" },
@@ -156,7 +156,7 @@ export const products: Product[] = [
         description:
           "耐磨涤纶配 PU 涂层。底部加强设计,防止束绳撕裂。适用于运动队、夏令营、展会礼品及瑜伽馆。",
         moq: "100 件",
-        sizes: ["标准 35×45 cm", "加大 40×50 cm"],
+        sizes: ["标准 35 x 45 cm", "加大 40 x 50 cm"],
         colors: [
           { name: "黑色", hex: "#141414" },
           { name: "藏青", hex: "#1F3A5F" },
@@ -190,7 +190,7 @@ export const products: Product[] = [
       { minQty: 200, maxQty: 499, unitPrice: "$14.50" },
       { minQty: 500, unitPrice: "$11.80" },
     ],
-    sizes: ["Standard 32×42×45 cm", "Large 38×48×52 cm"],
+    sizes: ["Standard 32 x 42 x 45 cm", "Large 38 x 48 x 52 cm"],
     colors: [
       { name: "Black", hex: "#0F0F0F" },
       { name: "Red", hex: "#C9202E" },
@@ -206,7 +206,7 @@ export const products: Product[] = [
         description:
           "牛津涤纶外壳,配泡沫保温层及食品级内衬。加厚肩带、防水拉链,并带有放置订单小票的透明口袋。广泛用于本地餐厅及众包外卖平台。",
         moq: "50 件",
-        sizes: ["标准 32×42×45 cm", "加大 38×48×52 cm"],
+        sizes: ["标准 32 x 42 x 45 cm", "加大 38 x 48 x 52 cm"],
         colors: [
           { name: "黑色", hex: "#0F0F0F" },
           { name: "红色", hex: "#C9202E" },
@@ -239,7 +239,7 @@ export const products: Product[] = [
       { minQty: 2000, maxQty: 9999, unitPrice: "$0.18" },
       { minQty: 10000, unitPrice: "$0.12" },
     ],
-    sizes: ["Small 30×35 cm", "Medium 35×40 cm", "Large 40×45 cm"],
+    sizes: ["Small 30 x 35 cm", "Medium 35 x 40 cm", "Large 40 x 45 cm"],
     colors: [
       { name: "White", hex: "#F5F5F0" },
       { name: "Black", hex: "#181818" },
@@ -257,7 +257,7 @@ export const products: Product[] = [
         description:
           "可回收 PP 无纺布——大批量宣传订单的高性价比选择。可折叠至内置小袋。超市、药房及会议礼品的常用款。",
         moq: "500 件",
-        sizes: ["小号 30×35 cm", "中号 35×40 cm", "大号 40×45 cm"],
+        sizes: ["小号 30 x 35 cm", "中号 35 x 40 cm", "大号 40 x 45 cm"],
         colors: [
           { name: "白色", hex: "#F5F5F0" },
           { name: "黑色", hex: "#181818" },
@@ -293,7 +293,7 @@ export const products: Product[] = [
       { minQty: 2000, maxQty: 9999, unitPrice: "$0.28" },
       { minQty: 10000, unitPrice: "$0.18" },
     ],
-    sizes: ["Small 16×20×8 cm", "Medium 24×32×10 cm", "Large 32×40×12 cm"],
+    sizes: ["Small 16 x 20 x 8 cm", "Medium 24 x 32 x 10 cm", "Large 32 x 40 x 12 cm"],
     colors: [
       { name: "Brown kraft", hex: "#A87648" },
       { name: "White kraft", hex: "#F2EBDD" },
@@ -307,7 +307,7 @@ export const products: Product[] = [
         description:
           "采用再生牛皮纸制作。纸绳提手通过内部加强贴片粘接,承重更强。适合精品零售、面包店及外带场景。",
         moq: "500 件",
-        sizes: ["小号 16×20×8 cm", "中号 24×32×10 cm", "大号 32×40×12 cm"],
+        sizes: ["小号 16 x 20 x 8 cm", "中号 24 x 32 x 10 cm", "大号 32 x 40 x 12 cm"],
         colors: [
           { name: "棕色牛皮纸", hex: "#A87648" },
           { name: "白色牛皮纸", hex: "#F2EBDD" },
@@ -339,7 +339,7 @@ export const products: Product[] = [
       { minQty: 1000, maxQty: 4999, unitPrice: "$1.15" },
       { minQty: 5000, unitPrice: "$0.95" },
     ],
-    sizes: ["Small 28×32 cm", "Standard 35×40 cm", "Large 40×45 cm"],
+    sizes: ["Small 28 x 32 cm", "Standard 35 x 40 cm", "Large 40 x 45 cm"],
     colors: [
       { name: "Natural", hex: "#C4A17B" },
       { name: "Bleached", hex: "#F0E6C9" },
@@ -353,7 +353,7 @@ export const products: Product[] = [
         description:
           "采用天然黄麻纤维织造。可选覆膜内衬提升防水性。适合红酒礼盒、环保零售、婚礼伴手礼及酒店洗漱用品包装。",
         moq: "200 件",
-        sizes: ["小号 28×32 cm", "标准 35×40 cm", "加大 40×45 cm"],
+        sizes: ["小号 28 x 32 cm", "标准 35 x 40 cm", "加大 40 x 45 cm"],
         colors: [
           { name: "本色", hex: "#C4A17B" },
           { name: "漂白", hex: "#F0E6C9" },
@@ -385,7 +385,7 @@ export const products: Product[] = [
       { minQty: 1000, maxQty: 4999, unitPrice: "$0.52" },
       { minQty: 5000, unitPrice: "$0.38" },
     ],
-    sizes: ["Small 15×10 cm", "Medium 20×14 cm", "Large 25×18 cm"],
+    sizes: ["Small 15 x 10 cm", "Medium 20 x 14 cm", "Large 25 x 18 cm"],
     colors: [
       { name: "Natural", hex: "#EFE3C8" },
       { name: "Black", hex: "#1A1A1A" },
@@ -401,7 +401,7 @@ export const products: Product[] = [
         description:
           "棉帆布配顺滑金属拉链。平底款可在桌面直立放置。适合化妆品牌、手工套装及企业欢迎礼包。",
         moq: "300 件",
-        sizes: ["小号 15×10 cm", "中号 20×14 cm", "大号 25×18 cm"],
+        sizes: ["小号 15 x 10 cm", "中号 20 x 14 cm", "大号 25 x 18 cm"],
         colors: [
           { name: "本色", hex: "#EFE3C8" },
           { name: "黑色", hex: "#1A1A1A" },

@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { getServiceSupabase } from "@/lib/supabase";
-import { sendInquiryNotification } from "@/lib/inquiry-email";
+import {
+  sendInquiryNotification,
+  SIGNED_URL_TTL_SECONDS,
+} from "@/lib/inquiry-email";
+import { INQUIRY_UPLOADS_BUCKET } from "@/lib/uploads";
 
 type ContactMethod = "whatsapp" | "wechat" | "phone" | "telegram" | "line" | "other";
 const CONTACT_METHODS: ContactMethod[] = [
@@ -241,6 +245,28 @@ export async function POST(request: Request) {
     });
   }
 
+  // Generate signed download URLs for all attachments so sales can open
+  // files straight from the email without admin login. 7-day TTL.
+  // Skipped silently when Supabase isn't configured.
+  const signedUrlMap = new Map<string, string>();
+  if (supabase) {
+    const allPaths = items.flatMap((i) => i.uploads.map((u) => u.storage_path));
+    if (allPaths.length > 0) {
+      const { data: signed, error: signErr } = await supabase.storage
+        .from(INQUIRY_UPLOADS_BUCKET)
+        .createSignedUrls(allPaths, SIGNED_URL_TTL_SECONDS);
+      if (signErr) {
+        console.error("[inquiry] signed URL generation failed", signErr);
+      } else if (signed) {
+        for (const entry of signed) {
+          if (entry.path && entry.signedUrl && !entry.error) {
+            signedUrlMap.set(entry.path, entry.signedUrl);
+          }
+        }
+      }
+    }
+  }
+
   // Email notification (best-effort).
   void sendInquiryNotification({
     requestId,
@@ -270,6 +296,7 @@ export async function POST(request: Request) {
         sizeBytes: u.size_bytes ?? 0,
         kind: u.kind ?? undefined,
         storagePath: u.storage_path,
+        signedUrl: signedUrlMap.get(u.storage_path),
       })),
     })),
     createdAt,
