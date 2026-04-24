@@ -1,0 +1,1 @@
+- [ICOMing website rebuild](project_icoming_rebuild.md) — B2B catalog site rebuild for family bag manufacturer; Reference Materials are scraped old site, reusable for content only.

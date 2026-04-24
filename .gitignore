@@ -13,9 +13,15 @@ Thumbs.db
 next-env.d.ts
 .vercel
 
-# Source research from the previous vendor — not part of the app.
-# Kept locally only; curated assets live in /public/images/.
-Reference Materials/
+# Source research from the previous vendor. Kept in the repo so the
+# project is self-contained across machines, but the noisy subfolders
+# (SEO doorway pages and broken CMS glue code) are excluded to keep
+# the repo under ~500 MB. See Reference Materials/README.md.
+Reference Materials/html/news/
+Reference Materials/html/products/
+Reference Materials/script/
+Reference Materials/style/
+Reference Materials/.Temp/
 
 # IDE
 .vscode/
