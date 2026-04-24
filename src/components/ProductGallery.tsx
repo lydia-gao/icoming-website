@@ -7,6 +7,9 @@ import { useState } from "react";
  * Simple product gallery — main image + horizontal thumbnail rail.
  * Clicking a thumbnail swaps the main; mobile scrolls the rail
  * horizontally. No lightbox/zoom yet (deferred).
+ *
+ * Uses object-contain + padding so white-background product shots
+ * stay fully visible rather than getting cropped at the edges.
  */
 export function ProductGallery({
   images,
@@ -29,7 +32,7 @@ export function ProductGallery({
             fill
             priority
             sizes="(max-width: 1024px) 100vw, 600px"
-            className="object-cover"
+            className="object-contain p-4 sm:p-6"
           />
         )}
       </div>
@@ -61,7 +64,7 @@ export function ProductGallery({
                   alt=""
                   fill
                   sizes="80px"
-                  className="object-cover"
+                  className="object-contain p-1.5"
                 />
               </button>
             );

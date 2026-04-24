@@ -190,25 +190,31 @@ export function ProductVariantsPanel({
             )}
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            {product.colors.map((color) => {
-              const isActive = selectedColor === color.name;
-              return (
-                <button
-                  type="button"
-                  key={color.name}
-                  onClick={() => setSelectedColor(color.name)}
-                  aria-pressed={isActive}
-                  aria-label={color.name}
-                  title={color.name}
-                  className={`relative h-8 w-8 rounded-full ring-2 transition ${
-                    isActive
-                      ? "ring-moss-700 ring-offset-2 ring-offset-sand-50"
-                      : "ring-ink-100 hover:ring-ink-800/40"
-                  }`}
-                  style={{ backgroundColor: color.hex ?? "#D8D4CA" }}
-                />
-              );
-            })}
+            {product.colors
+              .filter(
+                (c) =>
+                  c.name.trim().toLowerCase() !==
+                  ui.variants.customOption.trim().toLowerCase(),
+              )
+              .map((color) => {
+                const isActive = selectedColor === color.name;
+                return (
+                  <button
+                    type="button"
+                    key={color.name}
+                    onClick={() => setSelectedColor(color.name)}
+                    aria-pressed={isActive}
+                    aria-label={color.name}
+                    title={color.name}
+                    className={`relative h-8 w-8 rounded-full ring-2 transition ${
+                      isActive
+                        ? "ring-moss-700 ring-offset-2 ring-offset-sand-50"
+                        : "ring-ink-100 hover:ring-ink-800/40"
+                    }`}
+                    style={{ backgroundColor: color.hex ?? "#D8D4CA" }}
+                  />
+                );
+              })}
             <button
               type="button"
               onClick={() => setSelectedColor(CUSTOM)}
@@ -340,6 +346,13 @@ function VariantPills({
   onCustomChange: (value: string) => void;
 }) {
   const showCustomInput = selected === CUSTOM;
+  // Defensive: if the data accidentally contains a "Custom" preset it
+  // would render twice (once from data, once as our fixed escape hatch).
+  // Strip any option that matches customLabel case-insensitively — the
+  // escape-hatch pill is the canonical custom entry.
+  const filteredOptions = options.filter(
+    (o) => o.trim().toLowerCase() !== customLabel.trim().toLowerCase(),
+  );
   return (
     <section>
       <div className="mb-2 flex items-baseline justify-between gap-2">
@@ -351,7 +364,7 @@ function VariantPills({
         )}
       </div>
       <div className="flex flex-wrap gap-2">
-        {options.map((opt) => {
+        {filteredOptions.map((opt) => {
           const isActive = selected === opt;
           return (
             <button

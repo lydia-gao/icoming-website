@@ -28,8 +28,9 @@ export type WhatsAppProduct = {
 
 /**
  * Pre-fill used on the inquiry success page. Includes request ID,
- * contact info, and a compact variant summary per product so sales
- * can scan an RFQ from the WhatsApp thread alone.
+ * contact info, a compact variant summary per product, and the
+ * buyer's free-text message — so sales can scan an RFQ from the
+ * WhatsApp thread alone.
  */
 export function inquiryWhatsappMessage(
   locale: Locale,
@@ -38,6 +39,7 @@ export function inquiryWhatsappMessage(
     name: string;
     company?: string;
     products: WhatsAppProduct[];
+    message?: string;
   },
 ): string {
   const isZh = locale === "zh";
@@ -49,6 +51,8 @@ export function inquiryWhatsappMessage(
         : "(no specific products)"
       : data.products.map((p) => renderProduct(p, isZh)).join("\n");
 
+  const trimmedMessage = data.message?.trim();
+
   if (isZh) {
     return [
       "您好,我通过 ICOMing 官网提交了询盘。",
@@ -58,6 +62,8 @@ export function inquiryWhatsappMessage(
       data.company ? `公司: ${data.company}` : null,
       "产品:",
       productsBlock,
+      trimmedMessage ? "" : null,
+      trimmedMessage ? `备注: ${trimmedMessage}` : null,
       "",
       "期待进一步沟通。",
     ]
@@ -73,6 +79,8 @@ export function inquiryWhatsappMessage(
     data.company ? `Company: ${data.company}` : null,
     "Products:",
     productsBlock,
+    trimmedMessage ? "" : null,
+    trimmedMessage ? `Notes: ${trimmedMessage}` : null,
     "",
     "Looking forward to discussing further.",
   ]

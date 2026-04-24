@@ -39,7 +39,7 @@ export const products: Product[] = [
       { minQty: 500, maxQty: 999, unitPrice: "$0.95" },
       { minQty: 1000, unitPrice: "$0.78" },
     ],
-    sizes: ["Standard 38×42 cm", "Large 40×45 cm", "Custom"],
+    sizes: ["Standard 38×42 cm", "Large 40×45 cm"],
     colors: [
       { name: "Natural", hex: "#F0E6D2" },
       { name: "Black", hex: "#1A1A1A" },
@@ -56,7 +56,7 @@ export const products: Product[] = [
         description:
           "零售品牌、活动赠品及可持续推广的常备款。本色与黑色为常备色,定制订单可按 Pantone 精准对色。印刷方式包括丝印、数码、热转印和刺绣。可选增加加宽底、内袋及拉链封口。",
         moq: "100 件",
-        sizes: ["标准 38×42 cm", "加大 40×45 cm", "定制"],
+        sizes: ["标准 38×42 cm", "加大 40×45 cm"],
         colors: [
           { name: "本色", hex: "#F0E6D2" },
           { name: "黑色", hex: "#1A1A1A" },

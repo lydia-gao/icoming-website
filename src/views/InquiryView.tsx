@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useInquiry, type InquiryItem } from "@/lib/inquiry-context";
 import { localizedCompany } from "@/data/company";
 import { uiContent } from "@/content/ui";
@@ -21,7 +22,9 @@ import {
   type UploadResult,
 } from "@/lib/uploads";
 
-type FormState = "idle" | "submitting" | "success" | "error";
+type FormState = "idle" | "submitting" | "error";
+
+const SUCCESS_STORAGE_PREFIX = "icoming.inquiry.success.";
 
 type ContactMethod =
   | ""
@@ -43,6 +46,7 @@ type SuccessData = {
   requestId: string;
   name: string;
   company?: string;
+  message?: string;
   products: WhatsAppProduct[];
 };
 
@@ -50,6 +54,9 @@ const MAX_ATTACHMENTS_PER_ITEM = 10;
 
 export function InquiryView({ locale }: { locale: Locale }) {
   const { items, hydrated, remove, updateNote, clear } = useInquiry();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const submittedParam = searchParams?.get("submitted") ?? null;
   const [formState, setFormState] = useState<FormState>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [preferredContact, setPreferredContact] = useState<ContactMethod>("");
@@ -59,6 +66,24 @@ export function InquiryView({ locale }: { locale: Locale }) {
   >({});
   const company = localizedCompany(locale);
   const ui = uiContent[locale].inquiryPage;
+
+  // Success state is driven by the URL (`?submitted=<requestId>`) backed
+  // by sessionStorage. Nav events that drop the query param (including
+  // clicking the header's "Inquiry" link) clear the success view because
+  // useSearchParams is reactive. Refresh on the success URL still works
+  // because sessionStorage persists for the tab's lifetime.
+  useEffect(() => {
+    if (!submittedParam) {
+      setSuccessData(null);
+      return;
+    }
+    try {
+      const raw = sessionStorage.getItem(SUCCESS_STORAGE_PREFIX + submittedParam);
+      setSuccessData(raw ? (JSON.parse(raw) as SuccessData) : null);
+    } catch {
+      setSuccessData(null);
+    }
+  }, [submittedParam]);
 
   const attachmentStateSetter = (slug: string) => (
     updater: (prev: LocalAttachment[]) => LocalAttachment[],
@@ -129,6 +154,8 @@ export function InquiryView({ locale }: { locale: Locale }) {
     const submittedName = ((formData.get("name") as string) || "").trim();
     const submittedCompany =
       ((formData.get("company") as string) || "").trim() || undefined;
+    const submittedMessage =
+      ((formData.get("message") as string) || "").trim() || undefined;
 
     // Reject any attachments with pre-existing validation errors.
     const hasBadFiles = Object.values(attachmentsBySlug)
@@ -168,7 +195,7 @@ export function InquiryView({ locale }: { locale: Locale }) {
       contactMethod: method,
       contactHandle: handle,
       otherPlatformName: method === "other" ? otherPlatform : undefined,
-      message: ((formData.get("message") as string) || "").trim() || undefined,
+      message: submittedMessage,
       items: items.map((item) => ({
         slug: item.slug,
         name: item.name,
@@ -216,22 +243,38 @@ export function InquiryView({ locale }: { locale: Locale }) {
       if (!res.ok || !body.ok || !body.requestId) {
         throw new Error(body.error ?? "Submission failed");
       }
-      setSuccessData({
+      const success: SuccessData = {
         requestId: body.requestId,
         name: submittedName,
         company: submittedCompany,
+        message: submittedMessage,
         products: successProducts,
-      });
+      };
+      try {
+        sessionStorage.setItem(
+          SUCCESS_STORAGE_PREFIX + body.requestId,
+          JSON.stringify(success),
+        );
+      } catch {
+        // Session storage full / blocked — fall back to in-memory state so
+        // the user still sees the success page for this render.
+        setSuccessData(success);
+      }
       clear();
       setAttachmentsBySlug({});
       form.reset();
       setPreferredContact("");
-      setFormState("success");
+      setFormState("idle");
       if (uploadsFailed) {
-        // Still show success; warn in console for debugging. Success page
-        // itself doesn't surface this — the inquiry is saved.
         console.warn("[inquiry] some attachments failed to upload");
       }
+      // Navigate to the success URL. useSearchParams triggers a re-read
+      // from sessionStorage via the effect above, which promotes
+      // successData and renders the success UI.
+      router.replace(
+        `${localePath(locale, "/inquiry")}?submitted=${encodeURIComponent(body.requestId)}`,
+        { scroll: false },
+      );
     } catch (err) {
       setFormState("error");
       setErrorMessage(
@@ -250,7 +293,7 @@ export function InquiryView({ locale }: { locale: Locale }) {
     );
   }
 
-  if (formState === "success" && successData) {
+  if (successData) {
     const waHref = whatsappDeeplink(
       companyWhatsappNumber,
       inquiryWhatsappMessage(locale, successData),
