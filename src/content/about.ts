@@ -8,7 +8,7 @@ import { placeholder } from "./_types";
 const en = {
   hero: {
     eyebrow: "About us",
-    headline: "A family factory making bags for the world's brands.",
+    headline: "A manufacturer making bags for the world's brands.",
     body: "Pingyang ICom Bag Co., Ltd. is an industrial-and-trade company specializing in the research, development, production, and sales of shopping bags, non-woven bags, packaging bags, suit covers, and takeaway insulation bags.",
   },
 
@@ -86,7 +86,7 @@ const en = {
 const zh: typeof en = {
   hero: {
     eyebrow: "关于我们",
-    headline: "为全球品牌制袋的家族工厂。",
+    headline: "为全球品牌制袋的制造商。",
     body: "平阳爱康箱包有限公司是一家工贸一体的企业,专注于购物袋、无纺布袋、包装袋、西服袋以及外卖保温袋的研发、生产与销售。",
   },
 

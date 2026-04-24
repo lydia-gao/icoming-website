@@ -16,7 +16,7 @@ const en = {
     eyebrow: "Pingyang · Wenzhou, China",
     headline: "Eco-friendly bag manufacturing, built on trust.",
     subheadline:
-      "A family-run factory producing cotton totes, non-woven shoppers, cooler bags, and custom packaging for brands, retailers, and distributors worldwide.",
+      "A factory producing cotton totes, non-woven shoppers, cooler bags, and custom packaging for brands, retailers, and distributors worldwide.",
     primaryCta: { label: "Browse products", href: "/products" },
     secondaryCta: { label: "See capabilities", href: "/capabilities" },
   },
@@ -94,7 +94,7 @@ const zh: typeof en = {
     eyebrow: "中国浙江 · 温州平阳",
     headline: "以信任为本的环保袋制造。",
     subheadline:
-      "一家家族经营的工厂,为全球品牌、零售商及分销商生产棉布手提袋、无纺布购物袋、保温袋及定制包装。",
+      "一家工厂,为全球品牌、零售商及分销商生产棉布手提袋、无纺布购物袋、保温袋及定制包装。",
     primaryCta: { label: "浏览产品", href: "/products" },
     secondaryCta: { label: "了解生产能力", href: "/capabilities" },
   },
