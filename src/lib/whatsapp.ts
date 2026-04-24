@@ -17,9 +17,19 @@ export function genericWhatsappMessage(locale: Locale): string {
     : "Hi, I found you on the ICOMing website.";
 }
 
+export type WhatsAppProduct = {
+  name: string;
+  size?: string;
+  color?: string;
+  material?: string;
+  quantity?: number;
+  priceSnapshot?: string;
+};
+
 /**
- * Pre-fill used on the inquiry success page. Includes request ID and
- * basic context so sales can look up the submission immediately.
+ * Pre-fill used on the inquiry success page. Includes request ID,
+ * contact info, and a compact variant summary per product so sales
+ * can scan an RFQ from the WhatsApp thread alone.
  */
 export function inquiryWhatsappMessage(
   locale: Locale,
@@ -27,17 +37,19 @@ export function inquiryWhatsappMessage(
     requestId: string;
     name: string;
     company?: string;
-    productNames: string[];
+    products: WhatsAppProduct[];
   },
 ): string {
-  const products =
-    data.productNames.length === 0
-      ? locale === "zh"
+  const isZh = locale === "zh";
+
+  const productsBlock =
+    data.products.length === 0
+      ? isZh
         ? "(无具体产品)"
         : "(no specific products)"
-      : data.productNames.map((n) => `- ${n}`).join("\n");
+      : data.products.map((p) => renderProduct(p, isZh)).join("\n");
 
-  if (locale === "zh") {
+  if (isZh) {
     return [
       "您好,我通过 ICOMing 官网提交了询盘。",
       "",
@@ -45,7 +57,7 @@ export function inquiryWhatsappMessage(
       `姓名: ${data.name}`,
       data.company ? `公司: ${data.company}` : null,
       "产品:",
-      products,
+      productsBlock,
       "",
       "期待进一步沟通。",
     ]
@@ -60,10 +72,32 @@ export function inquiryWhatsappMessage(
     `Name: ${data.name}`,
     data.company ? `Company: ${data.company}` : null,
     "Products:",
-    products,
+    productsBlock,
     "",
     "Looking forward to discussing further.",
   ]
     .filter((v): v is string => v !== null)
     .join("\n");
+}
+
+function renderProduct(p: WhatsAppProduct, isZh: boolean): string {
+  const details: string[] = [];
+  if (p.size)
+    details.push(isZh ? `尺寸: ${p.size}` : `Size: ${p.size}`);
+  if (p.color)
+    details.push(isZh ? `颜色: ${p.color}` : `Color: ${p.color}`);
+  if (p.material)
+    details.push(isZh ? `材质: ${p.material}` : `Material: ${p.material}`);
+  if (p.quantity != null) {
+    const qtyUnit = isZh ? "件" : "pcs";
+    details.push(isZh ? `数量: ${p.quantity} ${qtyUnit}` : `Qty: ${p.quantity} ${qtyUnit}`);
+  }
+  if (p.priceSnapshot) {
+    details.push(
+      isZh ? `报价段: ${p.priceSnapshot}` : `Price tier: ${p.priceSnapshot}`,
+    );
+  }
+  return details.length > 0
+    ? `- ${p.name}\n  ${details.join(", ")}`
+    : `- ${p.name}`;
 }

@@ -1,20 +1,20 @@
 "use client";
 
-import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import type { Product } from "@/data/types";
 import { uiContent } from "@/content/ui";
 import { localePath, type Locale } from "@/lib/i18n";
-import { SaveButton } from "./SaveButton";
+import { useInquiry } from "@/lib/inquiry-context";
 
 /**
  * Product detail right-column panel — tier pricing, size/color/material
- * pickers, quantity stepper, save-to-inquiry action.
+ * pickers (with a "Custom" escape hatch for each), quantity stepper,
+ * save-to-inquiry actions.
  *
- * Variant selections are display-only in this phase: they drive the
- * pricing highlight and the pickers' selected state, but the Save
- * button persists only the slug/name/image (same as everywhere else
- * on the site). Phase 2 will pipe selections into the RFQ note.
+ * All variant state is captured into the inquiry cart on save, flows
+ * through to the inquiry review page, the Supabase row, the sales email,
+ * and the WhatsApp pre-fill.
  */
 export function ProductVariantsPanel({
   product,
@@ -24,6 +24,8 @@ export function ProductVariantsPanel({
   locale: Locale;
 }) {
   const ui = uiContent[locale].productDetail;
+  const router = useRouter();
+  const { upsert, hasItem } = useInquiry();
   const image = product.images[0];
 
   const minOrderQty = product.minOrderQty ?? 0;
@@ -33,12 +35,16 @@ export function ProductVariantsPanel({
   const [selectedSize, setSelectedSize] = useState<string | null>(
     product.sizes?.[0] ?? null,
   );
+  const [customSize, setCustomSize] = useState<string>("");
   const [selectedColor, setSelectedColor] = useState<string | null>(
     product.colors?.[0]?.name ?? null,
   );
+  const [customColor, setCustomColor] = useState<string>("");
   const [selectedMaterial, setSelectedMaterial] = useState<string | null>(
     product.materials?.[0] ?? null,
   );
+  const [customMaterial, setCustomMaterial] = useState<string>("");
+  const [justAdded, setJustAdded] = useState(false);
 
   const activeTier = useMemo(() => {
     if (!product.priceRange) return null;
@@ -53,6 +59,53 @@ export function ProductVariantsPanel({
 
   const hasPricing = !!product.priceRange && product.priceRange.length > 0;
   const belowMoq = minOrderQty > 0 && quantity < minOrderQty;
+  const alreadyInCart = hasItem(product.slug);
+
+  // Reset "Added ✓" confirmation after 2s.
+  useEffect(() => {
+    if (!justAdded) return;
+    const t = setTimeout(() => setJustAdded(false), 2000);
+    return () => clearTimeout(t);
+  }, [justAdded]);
+
+  const captureSelection = () => {
+    const isCustomSize = selectedSize === CUSTOM;
+    const isCustomColor = selectedColor === CUSTOM;
+    const isCustomMaterial = selectedMaterial === CUSTOM;
+
+    const tierLabel = activeTier
+      ? activeTier.maxQty
+        ? ui.pricing.tierUpTo(activeTier.minQty, activeTier.maxQty)
+        : ui.pricing.tierAndUp(activeTier.minQty)
+      : undefined;
+
+    upsert({
+      slug: product.slug,
+      name: product.name,
+      image,
+      size: isCustomSize ? undefined : selectedSize ?? undefined,
+      sizeCustom: isCustomSize ? customSize.trim() || undefined : undefined,
+      color: isCustomColor ? undefined : selectedColor ?? undefined,
+      colorCustom: isCustomColor ? customColor.trim() || undefined : undefined,
+      material: isCustomMaterial ? undefined : selectedMaterial ?? undefined,
+      materialCustom: isCustomMaterial
+        ? customMaterial.trim() || undefined
+        : undefined,
+      quantity,
+      priceSnapshot: activeTier?.unitPrice,
+      tierLabel,
+    });
+  };
+
+  const handleAdd = () => {
+    captureSelection();
+    setJustAdded(true);
+  };
+
+  const handleRequestQuoteNow = () => {
+    captureSelection();
+    router.push(localePath(locale, "/inquiry"));
+  };
 
   return (
     <div className="space-y-6">
@@ -80,9 +133,7 @@ export function ProductVariantsPanel({
                 <div
                   key={i}
                   className={`grid grid-cols-[1fr_auto] items-center gap-4 px-4 py-2.5 text-sm transition ${
-                    isActive
-                      ? "bg-moss-100/80 text-ink-900"
-                      : "text-ink-700"
+                    isActive ? "bg-moss-100/80 text-ink-900" : "text-ink-700"
                   }`}
                 >
                   <dt>
@@ -111,36 +162,16 @@ export function ProductVariantsPanel({
 
       {/* Size */}
       {product.sizes && product.sizes.length > 0 && (
-        <section>
-          <div className="mb-2 flex items-baseline justify-between gap-2">
-            <h3 className="text-sm font-semibold text-ink-900">
-              {ui.variants.size}
-            </h3>
-            {selectedSize && (
-              <span className="text-xs text-ink-500">{selectedSize}</span>
-            )}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {product.sizes.map((size) => {
-              const isActive = selectedSize === size;
-              return (
-                <button
-                  type="button"
-                  key={size}
-                  onClick={() => setSelectedSize(size)}
-                  aria-pressed={isActive}
-                  className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-                    isActive
-                      ? "border-moss-700 bg-moss-700 text-white"
-                      : "border-ink-100 bg-white text-ink-700 hover:border-ink-800/40 hover:text-ink-900"
-                  }`}
-                >
-                  {size}
-                </button>
-              );
-            })}
-          </div>
-        </section>
+        <VariantPills
+          label={ui.variants.size}
+          options={product.sizes}
+          customLabel={ui.variants.customOption}
+          customPlaceholder={ui.variants.customSizePlaceholder}
+          selected={selectedSize}
+          onSelect={setSelectedSize}
+          customValue={customSize}
+          onCustomChange={setCustomSize}
+        />
       )}
 
       {/* Color */}
@@ -151,10 +182,14 @@ export function ProductVariantsPanel({
               {ui.variants.color}
             </h3>
             {selectedColor && (
-              <span className="text-xs text-ink-500">{selectedColor}</span>
+              <span className="text-xs text-ink-500">
+                {selectedColor === CUSTOM
+                  ? ui.variants.customOption
+                  : selectedColor}
+              </span>
             )}
           </div>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             {product.colors.map((color) => {
               const isActive = selectedColor === color.name;
               return (
@@ -174,42 +209,43 @@ export function ProductVariantsPanel({
                 />
               );
             })}
+            <button
+              type="button"
+              onClick={() => setSelectedColor(CUSTOM)}
+              aria-pressed={selectedColor === CUSTOM}
+              className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                selectedColor === CUSTOM
+                  ? "border-moss-700 bg-moss-700 text-white"
+                  : "border-ink-100 bg-white text-ink-700 hover:border-ink-800/40 hover:text-ink-900"
+              }`}
+            >
+              {ui.variants.customOption}
+            </button>
           </div>
+          {selectedColor === CUSTOM && (
+            <input
+              type="text"
+              value={customColor}
+              onChange={(e) => setCustomColor(e.target.value)}
+              placeholder={ui.variants.customColorPlaceholder}
+              className="mt-3 block w-full rounded-lg border-ink-100 bg-white text-sm focus:border-moss-500 focus:ring-moss-500"
+            />
+          )}
         </section>
       )}
 
       {/* Material */}
       {product.materials && product.materials.length > 0 && (
-        <section>
-          <div className="mb-2 flex items-baseline justify-between gap-2">
-            <h3 className="text-sm font-semibold text-ink-900">
-              {ui.variants.material}
-            </h3>
-            {selectedMaterial && (
-              <span className="text-xs text-ink-500">{selectedMaterial}</span>
-            )}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {product.materials.map((material) => {
-              const isActive = selectedMaterial === material;
-              return (
-                <button
-                  type="button"
-                  key={material}
-                  onClick={() => setSelectedMaterial(material)}
-                  aria-pressed={isActive}
-                  className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-                    isActive
-                      ? "border-moss-700 bg-moss-700 text-white"
-                      : "border-ink-100 bg-white text-ink-700 hover:border-ink-800/40 hover:text-ink-900"
-                  }`}
-                >
-                  {material}
-                </button>
-              );
-            })}
-          </div>
-        </section>
+        <VariantPills
+          label={ui.variants.material}
+          options={product.materials}
+          customLabel={ui.variants.customOption}
+          customPlaceholder={ui.variants.customMaterialPlaceholder}
+          selected={selectedMaterial}
+          onSelect={setSelectedMaterial}
+          customValue={customMaterial}
+          onCustomChange={setCustomMaterial}
+        />
       )}
 
       {/* Quantity */}
@@ -220,9 +256,7 @@ export function ProductVariantsPanel({
         <div className="inline-flex items-stretch overflow-hidden rounded-full ring-1 ring-ink-100">
           <button
             type="button"
-            onClick={() =>
-              setQuantity((q) => Math.max(1, q - stepSize(q)))
-            }
+            onClick={() => setQuantity((q) => Math.max(1, q - stepSize(q)))}
             aria-label={ui.quantity.decrease}
             className="flex h-10 w-10 items-center justify-center bg-white text-lg text-ink-700 transition hover:bg-sand-100"
           >
@@ -258,21 +292,107 @@ export function ProductVariantsPanel({
 
       {/* Actions */}
       <div className="flex flex-wrap gap-3 pt-2">
-        <SaveButton
-          slug={product.slug}
-          name={product.name}
-          image={image}
-          variant="full"
-        />
-        <Link
-          href={localePath(locale, "/inquiry")}
+        <button
+          type="button"
+          onClick={handleAdd}
+          aria-live="polite"
+          className={`btn-primary min-w-[10rem] transition ${
+            justAdded ? "bg-moss-800" : ""
+          }`}
+        >
+          {justAdded
+            ? ui.cta.addedFeedback
+            : alreadyInCart
+            ? ui.cta.updateInquiry
+            : ui.cta.addToInquiry}
+        </button>
+        <button
+          type="button"
+          onClick={handleRequestQuoteNow}
           className="btn-secondary"
         >
-          {ui.viewInquiryBasket}
-        </Link>
+          {ui.cta.requestQuoteNow}
+        </button>
       </div>
     </div>
   );
+}
+
+const CUSTOM = "__custom__";
+
+function VariantPills({
+  label,
+  options,
+  customLabel,
+  customPlaceholder,
+  selected,
+  onSelect,
+  customValue,
+  onCustomChange,
+}: {
+  label: string;
+  options: string[];
+  customLabel: string;
+  customPlaceholder: string;
+  selected: string | null;
+  onSelect: (value: string) => void;
+  customValue: string;
+  onCustomChange: (value: string) => void;
+}) {
+  const showCustomInput = selected === CUSTOM;
+  return (
+    <section>
+      <div className="mb-2 flex items-baseline justify-between gap-2">
+        <h3 className="text-sm font-semibold text-ink-900">{label}</h3>
+        {selected && (
+          <span className="text-xs text-ink-500">
+            {selected === CUSTOM ? customLabel : selected}
+          </span>
+        )}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {options.map((opt) => {
+          const isActive = selected === opt;
+          return (
+            <button
+              type="button"
+              key={opt}
+              onClick={() => onSelect(opt)}
+              aria-pressed={isActive}
+              className={pillClass(isActive)}
+            >
+              {opt}
+            </button>
+          );
+        })}
+        <button
+          type="button"
+          onClick={() => onSelect(CUSTOM)}
+          aria-pressed={selected === CUSTOM}
+          className={pillClass(selected === CUSTOM)}
+        >
+          {customLabel}
+        </button>
+      </div>
+      {showCustomInput && (
+        <input
+          type="text"
+          value={customValue}
+          onChange={(e) => onCustomChange(e.target.value)}
+          placeholder={customPlaceholder}
+          className="mt-3 block w-full rounded-lg border-ink-100 bg-white text-sm focus:border-moss-500 focus:ring-moss-500"
+        />
+      )}
+    </section>
+  );
+}
+
+function pillClass(isActive: boolean): string {
+  return `rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+    isActive
+      ? "border-moss-700 bg-moss-700 text-white"
+      : "border-ink-100 bg-white text-ink-700 hover:border-ink-800/40 hover:text-ink-900"
+  }`;
 }
 
 /** Step size scales with magnitude so the stepper stays useful at 10k+. */

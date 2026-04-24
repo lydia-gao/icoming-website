@@ -1,7 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProductCard } from "@/components/ProductCard";
+import { ProductGallery } from "@/components/ProductGallery";
 import { ProductVariantsPanel } from "@/components/ProductVariantsPanel";
 import { getCategoryBySlug } from "@/data/categories";
 import { getProductBySlug, getProductsByCategory } from "@/data/products";
@@ -16,7 +16,6 @@ export function ProductDetailView({ slug, locale }: { slug: string; locale: Loca
   const related = getProductsByCategory(product.categorySlug, locale)
     .filter((p) => p.slug !== product.slug)
     .slice(0, 3);
-  const image = product.images[0];
   const ui = uiContent[locale].productDetail;
 
   const hasSpecs = product.specs.length > 0;
@@ -45,16 +44,7 @@ export function ProductDetailView({ slug, locale }: { slug: string; locale: Loca
           </nav>
 
           <div className="mt-6 grid gap-10 lg:grid-cols-2">
-            <div className="relative aspect-square overflow-hidden rounded-3xl bg-sand-100 ring-1 ring-ink-100">
-              <Image
-                src={image}
-                alt={product.name}
-                fill
-                priority
-                sizes="(max-width: 1024px) 100vw, 600px"
-                className="object-cover"
-              />
-            </div>
+            <ProductGallery images={product.images} alt={product.name} />
 
             <div>
               {category && (

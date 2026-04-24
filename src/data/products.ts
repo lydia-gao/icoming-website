@@ -23,7 +23,13 @@ export const products: Product[] = [
       "Classic heavyweight cotton tote with self-fabric double handles — a clean blank for custom printing.",
     description:
       "A staple for retail brands, event giveaways, and sustainability campaigns. We stock natural and black base colors with full Pantone matching on custom orders. Printing options include screen, digital, heat-transfer, and embroidery. Gusseted base, inner pocket, and zipper closure available as customizations.",
-    images: ["/images/products/cotton-promotional-tote.jpg"],
+    images: [
+      "/images/products/cotton-promotional-tote.jpg",
+      "/images/marquee/QLiyRB.jpg",
+      "/images/marquee/CnUgBK.jpg",
+      "/images/marquee/eiKADC.jpg",
+      "/images/marquee/RMcPlK.jpg",
+    ],
     specs: [],
     moq: "100 pcs",
     minOrderQty: 100,
@@ -70,7 +76,12 @@ export const products: Product[] = [
       "Soft recycled cotton shopper — lighter weight for affordable promotional runs.",
     description:
       "Woven from recycled cotton scraps diverted from textile waste. Slightly textured finish that holds ink beautifully. Ideal for bookstores, cafés, and eco-conscious retail. Ships flat-packed to reduce freight cost.",
-    images: ["/images/products/cotton-recycled-canvas.jpg"],
+    images: [
+      "/images/products/cotton-recycled-canvas.jpg",
+      "/images/marquee/AaDEoB.jpg",
+      "/images/marquee/bYnzFH.jpg",
+      "/images/marquee/gzDSKI.jpg",
+    ],
     specs: [],
     moq: "200 pcs",
     minOrderQty: 200,
@@ -114,7 +125,11 @@ export const products: Product[] = [
       "Lightweight cinch sack for gyms, schools, and outdoor events — water-resistant polyester.",
     description:
       "Durable polyester with PU coating. Reinforced bottom corners to prevent tear-through from the drawstring. Perfect for sports teams, summer camps, trade-show swag, and yoga studios.",
-    images: ["/images/products/drawstring-sport.jpg"],
+    images: [
+      "/images/products/drawstring-sport.jpg",
+      "/images/marquee/dcFEKL.jpg",
+      "/images/marquee/IoECJC.jpg",
+    ],
     specs: [],
     moq: "100 pcs",
     minOrderQty: 100,
@@ -161,7 +176,11 @@ export const products: Product[] = [
       "Heavy-duty thermal backpack for restaurants and couriers.",
     description:
       "Oxford polyester shell with foam insulation and food-safe lining. Reinforced padded straps, waterproof zipper, and a clear pocket for delivery receipts. Popular with local restaurants and gig-economy platforms.",
-    images: ["/images/products/cooler-delivery-backpack.jpg"],
+    images: [
+      "/images/products/cooler-delivery-backpack.jpg",
+      "/images/marquee/CAyZbD.jpg",
+      "/images/marquee/LbtKJI.jpg",
+    ],
     specs: [],
     moq: "50 pcs",
     minOrderQty: 50,
@@ -206,7 +225,11 @@ export const products: Product[] = [
       "Budget-friendly reusable PP non-woven tote that folds into an integrated pouch.",
     description:
       "Recyclable PP non-woven fabric — affordable for large-volume promotional runs. Flat-packs into an internal pouch. A staple for supermarkets, pharmacies, and conference giveaways.",
-    images: ["/images/products/non-woven-folding.jpg"],
+    images: [
+      "/images/products/non-woven-folding.jpg",
+      "/images/marquee/PThafE.jpg",
+      "/images/marquee/gHxRl.jpg",
+    ],
     specs: [],
     moq: "500 pcs",
     minOrderQty: 500,
@@ -255,7 +278,12 @@ export const products: Product[] = [
       "Brown kraft shopper with twisted paper handles — retail-ready packaging.",
     description:
       "Made from recycled kraft paper. Twisted paper handles glued to an internal reinforcement patch for extra load strength. Perfect for boutique retail, bakeries, and takeaway.",
-    images: ["/images/products/paper-kraft-handles.jpg"],
+    images: [
+      "/images/products/paper-kraft-handles.jpg",
+      "/images/marquee/AWnyuB.jpg",
+      "/images/marquee/DjbsmB.jpg",
+      "/images/marquee/OUBNLJ.jpg",
+    ],
     specs: [],
     moq: "500 pcs",
     minOrderQty: 500,
@@ -297,7 +325,11 @@ export const products: Product[] = [
       "Naturally biodegradable jute tote — premium eco gift packaging.",
     description:
       "Woven from natural jute fiber. Laminated interior option for water resistance. Ideal for wine gift sets, eco-retail, wedding favors, and hotel amenity packaging.",
-    images: ["/images/products/jute-burlap-tote.jpg"],
+    images: [
+      "/images/products/jute-burlap-tote.jpg",
+      "/images/marquee/bgNaM.jpg",
+      "/images/marquee/DlKGBF.jpg",
+    ],
     specs: [],
     moq: "200 pcs",
     minOrderQty: 200,
@@ -339,7 +371,11 @@ export const products: Product[] = [
       "Multi-purpose cotton-canvas zipper pouch — for toiletries, DIY craft, or retail packaging.",
     description:
       "Cotton canvas with a smooth metal zipper. A flat-base variant stands upright on a counter. Great for makeup brands, craft kits, and corporate welcome gifts.",
-    images: ["/images/products/cosmetic-canvas-pouch.jpg"],
+    images: [
+      "/images/products/cosmetic-canvas-pouch.jpg",
+      "/images/marquee/arJEQE.jpg",
+      "/images/marquee/HbZkuJ.jpg",
+    ],
     specs: [],
     moq: "300 pcs",
     minOrderQty: 300,
@@ -385,7 +421,10 @@ export const products: Product[] = [
       "Breathable non-woven dress cover with optional clear window and full-length zipper.",
     description:
       "Designed for bridal boutiques, tailors, and costume rental. Breathable non-woven fabric prevents mildew while protecting the garment. Optional PEVA window and custom bottom gusset for ball gowns.",
-    images: ["/images/products/garment-wedding-cover.jpg"],
+    images: [
+      "/images/products/garment-wedding-cover.jpg",
+      "/images/marquee/MKclNC.jpg",
+    ],
     specs: [],
     moq: "100 pcs",
     minOrderQty: 100,

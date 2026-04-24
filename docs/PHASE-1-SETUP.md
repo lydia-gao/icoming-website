@@ -30,13 +30,20 @@ Project creation takes ~2 minutes.
 1. In the Supabase dashboard, open **SQL** → **New query**.
 2. Paste the contents of [`supabase/migrations/0001_initial_schema.sql`](../supabase/migrations/0001_initial_schema.sql).
 3. Click **Run**. You should see `Success. No rows returned.`
+4. **New query** → paste [`supabase/migrations/0002_storage_bucket.sql`](../supabase/migrations/0002_storage_bucket.sql)
+   → **Run**. This creates the private `inquiry-uploads` bucket used
+   for file attachments on inquiries. If the bucket is missing at
+   submit time, uploads silently skip (the inquiry still saves
+   without attachments) — but real attachment support needs it.
 
-Verify by navigating to **Table Editor** — you should now see
+Verify by navigating to **Table Editor** — you should see
 `inquiries`, `inquiry_items`, and `inquiry_uploads` tables.
+Then **Storage** — you should see the `inquiry-uploads` bucket
+(marked private).
 
-If you later edit the migration (add columns, change policies), save
-it as a new file (`0002_…`, `0003_…`) — never mutate a file already
-applied to production.
+If you later edit a migration (add columns, change policies), save
+the change as a new file (`0003_…`, `0004_…`) — never mutate a file
+already applied to production.
 
 ## 3. Grab the Supabase API keys
 

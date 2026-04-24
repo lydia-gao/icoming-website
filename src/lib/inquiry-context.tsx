@@ -12,19 +12,49 @@ import {
 
 const STORAGE_KEY = "icoming.inquiry.v1";
 
+/**
+ * Persisted inquiry cart item. Everything after `addedAt` is optional —
+ * items saved from a product card have only the basics; items saved
+ * from the product detail panel carry the full variant configuration.
+ *
+ * New optional fields are backward compatible with v1 localStorage
+ * data — old carts load without migration.
+ */
 export type InquiryItem = {
   slug: string;
   name: string;
   image: string;
-  note?: string;
   addedAt: number;
+
+  /** Optional user note (edited from the inquiry review page). */
+  note?: string;
+
+  /** Variants — populated when saved via ProductVariantsPanel. */
+  size?: string;
+  sizeCustom?: string;
+  color?: string;
+  colorCustom?: string;
+  material?: string;
+  materialCustom?: string;
+  quantity?: number;
+  /** Unit price snapshot at the selected tier, e.g. "$0.95". */
+  priceSnapshot?: string;
+  /** Human-readable tier label, e.g. "500 – 999 pcs" or "1000+ pcs". */
+  tierLabel?: string;
 };
 
 type InquiryContextValue = {
   items: InquiryItem[];
   count: number;
   hasItem: (slug: string) => boolean;
+  /** Add if missing, do nothing if already present. Used by card quick-save. */
   add: (item: Omit<InquiryItem, "addedAt">) => void;
+  /**
+   * Add or overwrite — replaces the entire item's variant/quantity/price
+   * section with the new payload, preserving `addedAt`. Used by the
+   * product-detail panel where users explicitly configure variants.
+   */
+  upsert: (item: Omit<InquiryItem, "addedAt">) => void;
   remove: (slug: string) => void;
   toggle: (item: Omit<InquiryItem, "addedAt">) => void;
   updateNote: (slug: string, note: string) => void;
@@ -72,6 +102,21 @@ export function InquiryProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const upsert = useCallback((item: Omit<InquiryItem, "addedAt">) => {
+    setItems((prev) => {
+      const idx = prev.findIndex((i) => i.slug === item.slug);
+      if (idx === -1) {
+        return [...prev, { ...item, addedAt: Date.now() }];
+      }
+      const existing = prev[idx];
+      return [
+        ...prev.slice(0, idx),
+        { ...item, addedAt: existing.addedAt, note: item.note ?? existing.note },
+        ...prev.slice(idx + 1),
+      ];
+    });
+  }, []);
+
   const remove = useCallback((slug: string) => {
     setItems((prev) => prev.filter((i) => i.slug !== slug));
   }, []);
@@ -92,8 +137,19 @@ export function InquiryProvider({ children }: { children: ReactNode }) {
   const clear = useCallback(() => setItems([]), []);
 
   const value = useMemo<InquiryContextValue>(
-    () => ({ items, count: items.length, hasItem, add, remove, toggle, updateNote, clear, hydrated }),
-    [items, hasItem, add, remove, toggle, updateNote, clear, hydrated],
+    () => ({
+      items,
+      count: items.length,
+      hasItem,
+      add,
+      upsert,
+      remove,
+      toggle,
+      updateNote,
+      clear,
+      hydrated,
+    }),
+    [items, hasItem, add, upsert, remove, toggle, updateNote, clear, hydrated],
   );
 
   return <InquiryContext.Provider value={value}>{children}</InquiryContext.Provider>;
