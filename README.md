@@ -1,12 +1,18 @@
 # ICOMing website
 
-Bilingual (English / 简体中文) B2B catalog and lead-gen site for **Pingyang
-ICom Bag Co., Ltd.** (平阳爱康箱包有限公司) — eco-friendly bag manufacturer
-in Wenzhou, Zhejiang, China.
+Bilingual (English / 简体中文) B2B catalog + RFQ site for **Pingyang
+ICom Bag Co., Ltd.** (平阳爱康箱包有限公司) — eco-friendly bag
+manufacturer in Wenzhou, Zhejiang.
 
-Built with Next.js 15 (App Router) + React 19 + TypeScript + Tailwind CSS.
-No separate backend — Next.js API routes and local TypeScript data files
-are enough for V1.
+Buyers browse products → configure variants (size / color / material /
+quantity) → add to an inquiry cart → submit an RFQ with optional file
+attachments. The inquiry persists to Supabase, triggers an email to
+sales with fresh download links, and gives the buyer a WhatsApp quick-
+follow-up button. Sales manages inquiries from a magic-link-authed
+`/admin` dashboard.
+
+**Stack:** Next.js 15 (App Router) · React 19 · TypeScript · Tailwind
+CSS · Supabase (Postgres + Auth + Storage) · Resend · Vercel.
 
 ---
 
@@ -14,218 +20,245 @@ are enough for V1.
 
 ```bash
 npm install
-cp .env.example .env.local  # adjust if needed, but defaults work for local
+cp .env.example .env.local     # fill in Supabase + Resend keys
 npm run dev
 ```
 
-Open <http://localhost:3000>. The English site is at `/`; the Chinese version
-is at `/zh` with a language switcher in the header.
+Open <http://localhost:3000>. English at `/`, Chinese at `/zh`,
+admin at `/admin`.
+
+Without `.env.local` the site still runs — inquiry submissions fall
+back to log-only mode, admin is unreachable (no auth), and uploads
+silently skip. See [`docs/PHASE-1-SETUP.md`](docs/PHASE-1-SETUP.md)
+and [`docs/PHASE-4-ADMIN.md`](docs/PHASE-4-ADMIN.md) for real setup.
 
 ## Scripts
 
-| Command            | What it does                                         |
-|--------------------|------------------------------------------------------|
-| `npm run dev`      | Start the dev server with hot reload                 |
-| `npm run build`    | Production build (all pages pre-rendered / SSG)      |
-| `npm start`        | Serve the production build locally                   |
-| `npm run lint`     | ESLint (`next lint`)                                 |
-| `npm run typecheck`| `tsc --noEmit` — type-only validation                |
+| Command              | What it does                                     |
+|----------------------|--------------------------------------------------|
+| `npm run dev`        | Dev server with hot reload                       |
+| `npm run build`      | Production build (pre-renders every static page) |
+| `npm start`          | Serve the production build locally               |
+| `npm run typecheck`  | `tsc --noEmit` — type-only validation            |
+| `npm run lint`       | `next lint`                                      |
 
-Before deploying, run at minimum `npm run typecheck` and `npm run build`.
+Before pushing, run `npm run typecheck && npm run build`.
 
 ## Project layout
 
 ```
 src/
   app/
-    layout.tsx            root layout: <html>, <body>, InquiryProvider
-    (site)/               English routes (URLs have no prefix)
-      layout.tsx          LocaleProvider="en" + Header + Footer
-      page.tsx            /
-      about/, capabilities/, categories/[slug]/, contact/, inquiry/,
-      products/, products/[slug]/, not-found.tsx
-    zh/                   Chinese routes (URLs prefixed with /zh)
-      layout.tsx          LocaleProvider="zh" + Header + Footer
+    layout.tsx                   root <html>/<body>, InquiryProvider
+    (site)/                      English routes (no URL prefix)
+      layout.tsx                 LocaleProvider="en" + Header + Footer
+      page.tsx, about/, capabilities/, categories/[slug]/,
+      contact/, inquiry/, products/, products/[slug]/, not-found.tsx
+    zh/                          Chinese routes (URLs prefixed with /zh)
+      layout.tsx                 LocaleProvider="zh" + Header + Footer
       (same page tree)
-    admin/                Internal admin dashboard (Phase 4)
-      (auth)/login/       Magic-link sign-in (public, allowlist-gated)
-      (gated)/            Auth-required routes
-        layout.tsx        Gate + admin chrome + sign out
-        inquiries/        List + filter/sort/search
-        inquiries/[id]/   Detail + editable status/assignee/notes
+    admin/                       Internal admin dashboard (Phase 4)
+      (auth)/login/              Magic-link sign-in
+      (gated)/                   Auth-gated layout + chrome
+        inquiries/               List + filter/sort/search
+        inquiries/[id]/          Detail + editable status/assignee/notes
     api/
       inquiry/route.ts           Public POST for inquiry submissions
       admin/
         inquiry/[id]/route.ts    PATCH status/assignee/notes (admin)
-        attachment/[id]/route.ts Fresh signed URL for attachment (admin)
-      auth/signout/route.ts      Clears session cookie (admin)
+        attachment/[id]/route.ts Fresh 1-hour signed URL for download
+      auth/signout/route.ts      Clears Supabase session cookie
     auth/callback/route.ts       Magic-link code exchange target
 
-  middleware.ts           Refreshes Supabase session cookies per request
+  middleware.ts                  Refreshes Supabase session cookies
 
-  views/                  One file per page; takes a `locale` prop.
-                          Both English and Chinese route wrappers render
-                          the same view component.
-
-  components/             Shared UI (Header, Footer, ProductCard, …)
-  content/                User-facing text. Each file exports
-                          Record<Locale, Shape> so EN and ZH share one type.
-    ui.ts                 Nav, buttons, form labels, metadata strings
+  views/                         One component per page; takes `locale` prop.
+                                 EN + ZH route wrappers render the same view.
+  components/                    Shared UI (Header, Footer, ProductCard,
+                                 ProductGallery, ProductVariantsPanel, …)
+  content/                       User-facing text. Each file exports
+                                 Record<Locale, Shape>; TS enforces parity.
+    ui.ts                        Nav, buttons, forms, metadata strings
     home.ts, about.ts, capabilities.ts, contact.ts, trust.ts
-    _types.ts             Placeholder<T> helper for unverified claims
-  data/                   Structured data (products, categories, company).
-                          Non-English translations attach as
-                          optional `translations.zh` overlays.
+    _types.ts                    Placeholder<T> helper for unverified claims
+  data/                          Structured data (products, categories, company).
+                                 Non-English translations via optional
+                                 `translations.zh` overlays.
   lib/
-    i18n.ts               Locale type, `localePath`, `swapLocale`
-    locale-context.tsx    <LocaleProvider> + useLocale()
-    inquiry-context.tsx   Saved-products state (localStorage-backed)
-    supabase.ts           Service-role client (server-only, RLS bypass)
-    supabase-browser.ts   Browser client for uploads + auth
-    supabase-server.ts    Cookies-aware server client + requireAdminRow()
-    resend.ts             Email client + recipient/from resolution
-    inquiry-email.ts      Transactional notification template + send
-    whatsapp.ts           wa.me deeplink builder + message templates
-    uploads.ts            Browser file-upload helper + MIME/size validation
+    i18n.ts                      Locale type, localePath, swapLocale
+    locale-context.tsx           <LocaleProvider> + useLocale()
+    inquiry-context.tsx          Saved-products cart (localStorage)
+    supabase.ts                  Service-role client (server, RLS bypass)
+    supabase-browser.ts          Publishable client (browser uploads + auth)
+    supabase-server.ts           Cookies-aware server client + requireAdminRow
+    resend.ts                    Email client + recipient/from resolution
+    inquiry-email.ts             Sales notification template + send
+    whatsapp.ts                  wa.me deeplink builder + message templates
+    uploads.ts                   Browser file upload + MIME/size validation
 
 supabase/
   migrations/
-    0001_initial_schema.sql   Inquiries, items, uploads, RLS, request_id seq
-    0002_storage_bucket.sql   inquiry-uploads private bucket + policy
-    0003_admin.sql            admin_users allowlist + is_admin() + RLS
+    0001_initial_schema.sql      Inquiries, items, uploads, RLS, rfq_seq
+    0002_storage_bucket.sql      inquiry-uploads private bucket + policies
+    0003_admin.sql               admin_users allowlist + is_admin() + RLS
+
+docs/
+  PHASE-1-SETUP.md               Supabase + Resend one-time setup
+  PHASE-4-ADMIN.md               Admin dashboard setup + workflow
+  FUTURE-TODO.md                 Deferred operational items
+  claude-memory/                 Committed snapshot of Claude's project memory
 ```
 
 ## Content workflow
 
-All user-visible copy is in `src/content/*.ts` (pages) and
-`src/data/*.ts` (products, categories, company info). Components stay
-free of hardcoded text. Non-developers can edit these TypeScript files
-directly — the shape is inferred from the English copy and TypeScript
-will flag missing Chinese translations.
+All user-facing text lives in `src/content/*.ts` and
+`src/data/*.ts`. Components are content-free. Non-developers edit
+those TypeScript files directly — the shape is enforced by
+`typeof en`, so TS flags missing Chinese translations.
 
-Unverified business facts (MOQ tiers, lead times, cert validity, etc.)
+Unverified business facts (MOQ tiers, cert validity, lead times, etc.)
 are wrapped in `placeholder("Label", "What we need")` and render as
-clay-colored **"To be provided"** cards on the site. This is intentional
-for preview / stakeholder review — the missing info is clearly visible,
-not silently fabricated. The full list of open items is in
-[`CONTENT-TODO.md`](CONTENT-TODO.md).
+clay-colored **"To be provided"** cards — intentionally visible so
+reviewers see exactly what's missing, rather than silent fabrication.
+Full list in [`CONTENT-TODO.md`](CONTENT-TODO.md).
 
 ## Inquiry flow
 
-1. User browses products, clicks **Save** on any card (persists in
-   localStorage across pages and across English ↔ Chinese switches).
-2. User visits **/inquiry** (or **/zh/inquiry**), reviews saved items,
-   adds per-item notes, fills out **Name + Email** (required) plus
-   optional **Company**, optional **preferred faster contact method**
-   (WhatsApp / WeChat / Phone / Telegram / Line / Other) with a
-   dynamic handle field, and an optional general **Message**.
-3. On submit, the browser POSTs to `/api/inquiry`.
-4. The server:
-   - Inserts the inquiry + line items into Supabase Postgres.
-   - Generates a `RFQ-{YYYY}-{00001}` request ID via a Postgres sequence.
-   - Fires a Resend email to the sales team (`INQUIRY_TO_EMAIL`).
-   - Returns `{ ok: true, requestId }`.
-5. The success page shows the request ID and a pre-filled
-   **Chat with us on WhatsApp** button that deeplinks into WhatsApp
-   with the request ID + buyer name + saved products in the message body.
+1. Buyer configures a product (size / color / material / qty / notes)
+   and clicks **Add to Inquiry** or **Request Quote Now**.
+2. Selections persist in `localStorage` via `InquiryContext`.
+3. Buyer goes to `/inquiry`, reviews line items (variant chips + per-
+   item notes), optionally attaches files (logo / design brief /
+   artwork / reference; PDF, PNG, JPG, SVG, AI up to 20 MB each).
+4. Contact form: Name* + Email* (required); Company + preferred-
+   contact-method dropdown (WhatsApp / WeChat / Phone / Telegram /
+   Line / Other, with a dynamic handle field) + general Message
+   (all optional).
+5. On submit:
+   - Files upload directly from browser to Supabase Storage via the
+     publishable key (bypasses Vercel's serverless body-size limit).
+   - Metadata POSTs to `/api/inquiry` — server inserts `inquiries` +
+     `inquiry_items` + `inquiry_uploads` rows, generates a human-
+     readable `RFQ-2026-00042` ID via a Postgres sequence.
+   - Resend sends the sales team a rich HTML email: contact,
+     variants per item, internal notes, clickable 7-day signed
+     download URLs per attachment.
+   - Server returns `{ok: true, requestId}`.
+6. Success page shows the request ID and a **Chat with us on
+   WhatsApp** button with a pre-filled message (request ID + name +
+   company + product list + buyer's Message) so sales can act
+   straight from the WhatsApp thread.
+7. Persistent WhatsApp CTA (header pill on desktop, floating bubble
+   on mobile) available on every page with a generic pre-fill.
 
-A persistent WhatsApp CTA (header pill on desktop, floating bottom-right
-on mobile) sends buyers into WhatsApp with a generic pre-filled message
-at any time — independent of the inquiry flow.
+**Graceful fallback**: missing Supabase env → synthetic
+`LOCAL-DEV-<ts>` request ID, logs instead of persisting. Missing
+Resend API key → emails silently skip. Missing storage bucket →
+uploads silently skip.
 
-**Graceful fallback**: if the Supabase env vars are unset (either the
-new `SUPABASE_SECRET_KEY` or the legacy `SUPABASE_SERVICE_ROLE_KEY`),
-the API returns a synthetic `LOCAL-DEV-…` request ID and logs the
-payload instead of persisting. If `RESEND_API_KEY` is unset, emails
-are silently skipped. This keeps local dev working without any
-account setup, and makes the app robust when a provider outage hits.
+## i18n
 
-See [`docs/PHASE-1-SETUP.md`](docs/PHASE-1-SETUP.md) for the one-time
-Supabase + Resend configuration.
+- English is default (`/`). Chinese at `/zh/*` (e.g. `/zh/products`,
+  `/zh/contact`).
+- Language switcher in the header preserves the current path when
+  toggling (via `swapLocale` in `src/lib/i18n.ts`).
+- Content files author EN + ZH side-by-side; TypeScript enforces
+  parity. Missing translation keys are a build error.
+- `<html lang>` stays `"en"` (App Router root-layout limitation).
+  Chinese pages set `<main lang="zh-CN">` for screen-reader
+  correctness.
 
 ## Admin dashboard (`/admin`)
 
-Internal tool for sales to review and manage RFQs. Magic-link
-authentication, allowlist-gated via the `admin_users` table.
+Internal tool for sales. Magic-link auth via Supabase, allowlist-gated
+by the `admin_users` table.
 
 Surfaces:
-- `/admin/login` — magic-link request form, public
-- `/admin/inquiries` — list with search (name/company/email/request-id),
-  status filter, sort, pagination
-- `/admin/inquiries/[id]` — full detail, variant chips, attachments
-  (fresh 1-hour signed URLs per click), editable
-  status / assignee / internal notes
+- `/admin/login` — magic-link request form
+- `/admin/inquiries` — paginated list, search (name/company/email/
+  request-ID), status filter, sort
+- `/admin/inquiries/[id]` — contact, buyer message, line items with
+  variant chips and per-item attachments (click = fresh 1-hour signed
+  URL), editable status / assignee / internal notes
 
-Setup is covered in [`docs/PHASE-4-ADMIN.md`](docs/PHASE-4-ADMIN.md):
-apply the `0003_admin.sql` migration, seed your email in `admin_users`,
-add Supabase Auth redirect URL allowlist entries, sign in.
-
-## i18n at a glance
-
-- English is the default locale (served from `/`).
-- Chinese lives under `/zh/*` (e.g. `/zh/products`, `/zh/contact`).
-- The language switcher in the header preserves the current path when
-  switching (via `swapLocale` in `src/lib/i18n.ts`).
-- Translations are authored side-by-side in each content file; the
-  TypeScript shape enforces parity (`typeof en` used as the `zh` type).
-- See [`docs/claude-memory/project_icoming_rebuild.md`](docs/claude-memory/project_icoming_rebuild.md)
-  for the architectural decisions.
+Setup: [`docs/PHASE-4-ADMIN.md`](docs/PHASE-4-ADMIN.md). Apply the
+`0003_admin.sql` migration, seed your email in `admin_users`, add the
+callback URL to Supabase's redirect allowlist, sign in.
 
 ## Deploying to Vercel
 
-The repo is a standard Next.js App Router project with no custom build
-config — it should Just Work on Vercel.
+Standard Next.js App Router project — no custom build config.
 
-1. Push to GitHub (or connect the existing remote).
-2. Vercel → **Add New… → Project** → import this repository.
-3. Accept the defaults:
-   - **Framework preset:** Next.js
-   - **Build command:** `npm run build` (default)
-   - **Output directory:** `.next` (default)
-   - **Install command:** `npm install` (default)
-4. Add environment variables (**Project → Settings → Environment
-   Variables**). All are technically optional — missing ones trigger
-   the graceful fallback — but you want these set for a real preview:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` *(new `sb_publishable_...`; legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY` also accepted)*
-   - `SUPABASE_SECRET_KEY` *(new `sb_secret_...`, server-only — don't prefix with NEXT_PUBLIC; legacy `SUPABASE_SERVICE_ROLE_KEY` also accepted)*
-   - `RESEND_API_KEY`
-   - `INQUIRY_TO_EMAIL` *(defaults to `sale2@i-coming.com`; comma-separated for multiple recipients)*
-   - `RESEND_FROM_EMAIL` *(optional; defaults to Resend's sandbox sender)*
+1. Push to GitHub.
+2. Vercel → **Add New → Project** → import the repo.
+3. Accept defaults (Framework: Next.js, Build: `npm run build`).
+4. Set environment variables (**Project → Settings → Environment
+   Variables**):
 
-   See [`docs/PHASE-1-SETUP.md`](docs/PHASE-1-SETUP.md) for how to
-   create the Supabase project, apply the schema, and set up Resend.
-5. Deploy. Preview URLs cover all routes under `/` and `/zh/*`.
-6. On the first deploy, verify:
-   - `/`, `/zh`, `/products`, `/zh/products/promotional-cotton-canvas-tote`,
-     `/inquiry`, `/zh/contact` all render correctly.
-   - Submit the inquiry form end-to-end. Expect a real
-     `RFQ-{year}-{nnnnn}` request ID, a row in the Supabase
-     `inquiries` table, a notification email at the configured address,
-     and a working **Chat with us on WhatsApp** deeplink on the success
-     page.
-   - The floating WhatsApp button on mobile and the pill in the desktop
-     header both open WhatsApp with a generic pre-filled message.
+   | Var                                    | Required | Notes                                      |
+   |----------------------------------------|:---:|-------------------------------------------------|
+   | `NEXT_PUBLIC_SUPABASE_URL`             | ✅  | `https://<ref>.supabase.co`                     |
+   | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | ✅  | `sb_publishable_...` (legacy `_ANON_KEY` also accepted) |
+   | `SUPABASE_SECRET_KEY`                  | ✅  | `sb_secret_...` (legacy `SERVICE_ROLE_KEY` also accepted). Server-only — no NEXT_PUBLIC prefix. |
+   | `RESEND_API_KEY`                       | ✅  | `re_...`                                         |
+   | `INQUIRY_TO_EMAIL`                     | optional | Default `sale2@i-coming.com`. Comma-sep for multiple. |
+   | `RESEND_FROM_EMAIL`                    | optional | Set once you verify a sending domain.       |
 
-No cron, no edge middleware, no custom regions needed.
+5. Deploy. Verify `/`, `/zh`, `/products`, `/admin/login`, submit a
+   test inquiry end-to-end.
+
+## Phases completed
+
+- **Phase 1** — Inquiry persistence to Supabase, transactional email
+  via Resend, WhatsApp CTAs, bilingual contact form, request-ID
+  generation, graceful fallbacks.
+- **Phase 2** — Variant pickers (size/color/material with Custom
+  escape hatch), tier pricing, quantity stepper, two-CTA product
+  flow (Add to Inquiry + Request Quote Now), multi-image gallery,
+  customer file uploads with signed-URL sales email.
+- **Phase 4** — `/admin` dashboard (magic-link auth, allowlist,
+  inquiry list + detail, status/assignee/notes editing, fresh
+  signed-URL attachment downloads).
 
 ## Known limitations (V1)
 
-- **`<html lang>` stays `en`** on every page. Chinese pages set
-  `<main lang="zh-CN">` for screen-reader correctness. Fixing this to
-  vary per locale requires either a `[locale]` dynamic segment at the
-  root or middleware with header injection — deferred.
-- **Inquiry emails are sent from `onboarding@resend.dev`** by default.
-  Deliverability is workable but not great (expect some spam folders
-  on first send). Verify a real domain (e.g. `rfq@i-coming.com`) in
-  Resend and set `RESEND_FROM_EMAIL` before go-live.
-- **Specs, MOQ, lead-time, cert validity** are rendered as
-  "To be provided" placeholders until the business team fills them in.
-  See `CONTENT-TODO.md`.
-- **9 of ~158 historical products** are migrated for V1. Scale the
-  rest after direction is approved.
-- **Factory/team photography** is limited; the biggest trust lift
-  before go-live is a half-day photoshoot (see `CONTENT-TODO.md` §6).
-- **Product detail page is pre-variant** — no quantity, size/color
-  pickers, tier pricing, or file uploads yet. That's Phase 2
-  (see roadmap).
+- **`<html lang>` is always `"en"`** — Chinese pages use `<main
+  lang="zh-CN">`. Fixable with middleware + header injection later.
+- **Resend sandbox sender** — `onboarding@resend.dev` can only
+  deliver to the Resend account owner. Verify a real domain for
+  production. See `docs/FUTURE-TODO.md`.
+- **Product catalog edited via TS files** — Phase 5 will move this
+  into the admin dashboard with DB-backed products.
+- **9 of ~158 historical products** migrated for V1.
+- **No per-assignee visibility** in admin — all admins see all
+  inquiries. Revisit when the team exceeds ~5.
+- **Placeholder pricing/variants** — real sales-verified values
+  replace them through the admin dashboard in Phase 5.
+- **Sandbox gotcha recap**: `×` and `–` replaced with ASCII `x` / `-`
+  in data files; some Windows / email-client fonts rendered the
+  multi-byte characters as `�`. Keep data ASCII-safe for numeric
+  separators (see `CLAUDE.md`).
+
+## Deferred operational items
+
+Tracked in [`docs/FUTURE-TODO.md`](docs/FUTURE-TODO.md):
+- Verify Resend sending domain (`rfq@i-coming.com`)
+- Separate preview vs production Supabase projects
+- Error monitoring (Vercel observability → Sentry if needed)
+- SEO polish (sitemap, robots, OG, hreflang, JSON-LD)
+- Finalize production DB config (key rotation, region, backups)
+
+## Further reading
+
+- [`CLAUDE.md`](CLAUDE.md) — conventions + gotchas for AI-assisted
+  development (also worth a human skim).
+- [`docs/PHASE-1-SETUP.md`](docs/PHASE-1-SETUP.md) — Supabase +
+  Resend first-time setup.
+- [`docs/PHASE-4-ADMIN.md`](docs/PHASE-4-ADMIN.md) — admin
+  dashboard setup + workflow.
+- [`docs/FUTURE-TODO.md`](docs/FUTURE-TODO.md) — operational
+  deferrals awaiting your action.
+- [`CONTENT-TODO.md`](CONTENT-TODO.md) — business content gaps
+  (specs, certs, factory photography).
+- [`docs/claude-memory/`](docs/claude-memory/) — committed Claude
+  memory snapshot for cross-machine continuity.
