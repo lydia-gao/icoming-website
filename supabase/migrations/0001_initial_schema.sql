@@ -94,10 +94,12 @@ create index if not exists inquiry_uploads_inquiry_idx on public.inquiry_uploads
 -- ---------------------------------------------------------------------------
 -- Row Level Security.
 -- ---------------------------------------------------------------------------
--- The API route uses the service-role key and therefore bypasses RLS. These
--- policies exist so that IF the anon key is ever used from the browser
--- (Phase 2 file uploads, etc.) the public can only insert — never read
--- inquiries. No public SELECT policy = public cannot enumerate RFQs.
+-- The API route uses the server-side secret key (Supabase: either the new
+-- `sb_secret_...` or the legacy service_role JWT) and therefore bypasses
+-- RLS. These policies exist so that IF the publishable / anon key is ever
+-- used from the browser (Phase 2 file uploads, etc.) the public can only
+-- insert — never read inquiries. No public SELECT policy = public cannot
+-- enumerate RFQs.
 alter table public.inquiries       enable row level security;
 alter table public.inquiry_items   enable row level security;
 alter table public.inquiry_uploads enable row level security;

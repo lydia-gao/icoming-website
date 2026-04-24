@@ -40,18 +40,26 @@ applied to production.
 
 ## 3. Grab the Supabase API keys
 
-**Dashboard → Project Settings → API**. Copy three values:
+**Dashboard → Project Settings → API Keys**. The dashboard now shows
+Supabase's newer key format — copy these three values:
 
-| Variable                          | Source                                   |
-|-----------------------------------|------------------------------------------|
-| `NEXT_PUBLIC_SUPABASE_URL`        | *Project URL*                            |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY`   | *Project API keys → anon / public*       |
-| `SUPABASE_SERVICE_ROLE_KEY`       | *Project API keys → service_role* ⚠ secret |
+| Variable                                    | Source                            | Looks like              |
+|---------------------------------------------|-----------------------------------|-------------------------|
+| `NEXT_PUBLIC_SUPABASE_URL`                  | *Project URL*                     | `https://xxx.supabase.co` |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`      | *Publishable key*                 | `sb_publishable_...`    |
+| `SUPABASE_SECRET_KEY`                       | *Secret key* ⚠ server-only        | `sb_secret_...`         |
 
-The service-role key bypasses Row Level Security. **Never commit it,
+The **secret key** bypasses Row Level Security. **Never commit it,
 never expose it to the browser, never prefix it with `NEXT_PUBLIC_`.**
 The API route in `src/app/api/inquiry/route.ts` is the only place it
 should be used.
+
+> **Older project?** If your dashboard still only shows the legacy
+> `anon` / `service_role` JWT keys (`eyJ...`), those work too. Set
+> them as `NEXT_PUBLIC_SUPABASE_ANON_KEY` and
+> `SUPABASE_SERVICE_ROLE_KEY`; the code falls back to those names
+> automatically. When you enable the new key model in that project,
+> migrate to the `sb_publishable_...` / `sb_secret_...` variants.
 
 ## 4. Resend account
 
@@ -74,8 +82,8 @@ Create `.env.local` in the repo root (copy from `.env.example`):
 
 ```dotenv
 NEXT_PUBLIC_SUPABASE_URL=https://xxxxxxxxxxxxxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGci...
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGci...
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxxxxxxxxxxx
+SUPABASE_SECRET_KEY=sb_secret_xxxxxxxxxxxx
 
 RESEND_API_KEY=re_xxxxxxxxxx
 INQUIRY_TO_EMAIL=sale2@i-coming.com
@@ -86,7 +94,7 @@ Restart the dev server so Next.js re-reads the env.
 
 For **Vercel**: **Project → Settings → Environment Variables**, add
 the same four (`NEXT_PUBLIC_SUPABASE_URL`,
-`NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`,
+`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`,
 `RESEND_API_KEY`) for the **Production** environment (and **Preview**
 if you want previews to hit the same DB — recommend a separate
 Supabase project for preview if you're worried about mixing test
@@ -115,10 +123,13 @@ submissions).
 ## Troubleshooting
 
 **"Could not save inquiry" error in the browser**
-Usually a bad service-role key or an RLS policy blocking the insert.
+Usually a bad secret key or an RLS policy blocking the insert.
 Check the server logs for the Supabase error; if it mentions
 `permission denied`, confirm the migration applied cleanly (the
-policies are on the last page of `0001_initial_schema.sql`).
+policies are on the last page of `0001_initial_schema.sql`). If it
+mentions `Invalid API key`, double-check that `SUPABASE_SECRET_KEY`
+(or legacy `SUPABASE_SERVICE_ROLE_KEY`) matches the key shown in the
+dashboard — it's easy to accidentally paste the publishable key.
 
 **Success page shows `LOCAL-DEV-…` even after env vars are set**
 The Next.js dev server only reads `.env.local` on startup. Restart it.

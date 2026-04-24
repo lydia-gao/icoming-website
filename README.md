@@ -115,11 +115,12 @@ A persistent WhatsApp CTA (header pill on desktop, floating bottom-right
 on mobile) sends buyers into WhatsApp with a generic pre-filled message
 at any time — independent of the inquiry flow.
 
-**Graceful fallback**: if `SUPABASE_*` env vars are unset, the API
-returns a synthetic `LOCAL-DEV-…` request ID and logs the payload
-instead of persisting. If `RESEND_API_KEY` is unset, emails are
-silently skipped. This keeps local dev working without any account
-setup, and makes the app robust when a provider outage hits.
+**Graceful fallback**: if the Supabase env vars are unset (either the
+new `SUPABASE_SECRET_KEY` or the legacy `SUPABASE_SERVICE_ROLE_KEY`),
+the API returns a synthetic `LOCAL-DEV-…` request ID and logs the
+payload instead of persisting. If `RESEND_API_KEY` is unset, emails
+are silently skipped. This keeps local dev working without any
+account setup, and makes the app robust when a provider outage hits.
 
 See [`docs/PHASE-1-SETUP.md`](docs/PHASE-1-SETUP.md) for the one-time
 Supabase + Resend configuration.
@@ -151,8 +152,8 @@ config — it should Just Work on Vercel.
    Variables**). All are technically optional — missing ones trigger
    the graceful fallback — but you want these set for a real preview:
    - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `SUPABASE_SERVICE_ROLE_KEY` *(server-only; don't prefix with NEXT_PUBLIC)*
+   - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` *(new `sb_publishable_...`; legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY` also accepted)*
+   - `SUPABASE_SECRET_KEY` *(new `sb_secret_...`, server-only — don't prefix with NEXT_PUBLIC; legacy `SUPABASE_SERVICE_ROLE_KEY` also accepted)*
    - `RESEND_API_KEY`
    - `INQUIRY_TO_EMAIL` *(defaults to `sale2@i-coming.com`; comma-separated for multiple recipients)*
    - `RESEND_FROM_EMAIL` *(optional; defaults to Resend's sandbox sender)*
