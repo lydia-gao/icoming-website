@@ -57,6 +57,8 @@ const en = {
   productCard: {
     moq: "MOQ",
     customOrder: "Custom order",
+    startingFrom: "From",
+    perPiece: "/ pc",
   },
 
   categoryCard: {
@@ -96,6 +98,30 @@ const en = {
       "Share quantity, target market, and any custom requirements. We'll come back within one business day with pricing and a sample plan.",
     talkToSales: "Talk to sales",
     relatedProducts: "Related products",
+    pricing: {
+      heading: "Tier pricing",
+      minOrder: "Min. order",
+      pcs: "pcs",
+      perPiece: "/ pc",
+      tierQty: "Quantity",
+      tierPrice: "Unit price",
+      tierUpTo: (min: number, max: number) => `${min} – ${max} pcs`,
+      tierAndUp: (min: number) => `${min}+ pcs`,
+      contactForPricing: "Contact for pricing",
+      sampleDataNote:
+        "Indicative pricing — final quote confirmed per specification and order.",
+    },
+    variants: {
+      size: "Size",
+      color: "Color",
+      material: "Material",
+    },
+    quantity: {
+      label: "Quantity",
+      decrease: "Decrease quantity",
+      increase: "Increase quantity",
+      belowMoq: (moq: number) => `Below MOQ of ${moq} pcs — sales can still quote.`,
+    },
   },
 
   categoryPage: {
@@ -240,6 +266,8 @@ const zh: typeof en = {
   productCard: {
     moq: "起订量",
     customOrder: "按需定制",
+    startingFrom: "起价",
+    perPiece: "/ 件",
   },
 
   categoryCard: {
@@ -279,6 +307,30 @@ const zh: typeof en = {
       "告知我们数量、目标市场以及任何定制需求。我们将在一个工作日内回复报价及打样方案。",
     talkToSales: "联系销售",
     relatedProducts: "相关产品",
+    pricing: {
+      heading: "阶梯价格",
+      minOrder: "起订量",
+      pcs: "件",
+      perPiece: "/ 件",
+      tierQty: "数量",
+      tierPrice: "单价",
+      tierUpTo: (min: number, max: number) => `${min} – ${max} 件`,
+      tierAndUp: (min: number) => `${min}+ 件`,
+      contactForPricing: "联系询价",
+      sampleDataNote:
+        "以上价格仅供参考,最终报价将根据规格与订单数量确认。",
+    },
+    variants: {
+      size: "尺寸",
+      color: "颜色",
+      material: "材质",
+    },
+    quantity: {
+      label: "数量",
+      decrease: "减少数量",
+      increase: "增加数量",
+      belowMoq: (moq: number) => `低于 ${moq} 件起订量——销售仍可为您报价。`,
+    },
   },
 
   categoryPage: {

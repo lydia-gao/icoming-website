@@ -1,8 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { SaveButton } from "@/components/SaveButton";
 import { ProductCard } from "@/components/ProductCard";
+import { ProductVariantsPanel } from "@/components/ProductVariantsPanel";
 import { getCategoryBySlug } from "@/data/categories";
 import { getProductBySlug, getProductsByCategory } from "@/data/products";
 import { uiContent } from "@/content/ui";
@@ -20,8 +20,6 @@ export function ProductDetailView({ slug, locale }: { slug: string; locale: Loca
   const ui = uiContent[locale].productDetail;
 
   const hasSpecs = product.specs.length > 0;
-  const hasMoq = Boolean(product.moq);
-  const hasLeadTime = Boolean(product.leadTime);
 
   return (
     <>
@@ -72,33 +70,15 @@ export function ProductDetailView({ slug, locale }: { slug: string; locale: Loca
               </p>
               <p className="mt-4 text-ink-600">{product.description}</p>
 
-              {(hasMoq || hasLeadTime) && (
-                <div className="mt-8 grid gap-2 rounded-2xl bg-sand-100/60 p-5 text-sm">
-                  {hasMoq && (
-                    <div className="flex justify-between">
-                      <span className="text-ink-400">{ui.moq}</span>
-                      <span className="font-medium text-ink-900">{product.moq}</span>
-                    </div>
-                  )}
-                  {hasLeadTime && (
-                    <div className="flex justify-between">
-                      <span className="text-ink-400">{ui.leadTime}</span>
-                      <span className="font-medium text-ink-900">{product.leadTime}</span>
-                    </div>
-                  )}
+              {product.leadTime && (
+                <div className="mt-6 flex items-center justify-between rounded-xl bg-white px-4 py-2.5 text-sm ring-1 ring-ink-100">
+                  <span className="text-ink-400">{ui.leadTime}</span>
+                  <span className="font-medium text-ink-900">{product.leadTime}</span>
                 </div>
               )}
 
-              <div className="mt-6 flex flex-wrap gap-3">
-                <SaveButton
-                  slug={product.slug}
-                  name={product.name}
-                  image={image}
-                  variant="full"
-                />
-                <Link href={localePath(locale, "/inquiry")} className="btn-secondary">
-                  {ui.viewInquiryBasket}
-                </Link>
+              <div className="mt-8">
+                <ProductVariantsPanel product={product} locale={locale} />
               </div>
             </div>
           </div>
@@ -140,24 +120,6 @@ export function ProductDetailView({ slug, locale }: { slug: string; locale: Loca
                       className="rounded-full bg-moss-100 px-3 py-1 text-sm text-moss-800"
                     >
                       {c}
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
-
-            {product.materials && product.materials.length > 0 && (
-              <>
-                <h3 className="mt-8 font-serif text-lg text-ink-900">
-                  {ui.availableMaterials}
-                </h3>
-                <ul className="mt-3 flex flex-wrap gap-2">
-                  {product.materials.map((m) => (
-                    <li
-                      key={m}
-                      className="rounded-full bg-sand-100 px-3 py-1 text-sm text-ink-800"
-                    >
-                      {m}
                     </li>
                   ))}
                 </ul>
