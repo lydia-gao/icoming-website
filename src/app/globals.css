@@ -1,0 +1,84 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  @apply bg-sand-50 text-ink-800 antialiased;
+}
+
+body {
+  font-feature-settings: "ss01", "cv11";
+}
+
+@layer components {
+  .container-content {
+    @apply mx-auto w-full max-w-content px-4 sm:px-6 lg:px-8;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-moss-700 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-moss-800 focus:outline-none focus:ring-2 focus:ring-moss-500 focus:ring-offset-2 focus:ring-offset-sand-50 disabled:opacity-60 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-ink-800/20 bg-white px-5 py-2.5 text-sm font-medium text-ink-800 transition hover:border-ink-800/40 hover:bg-sand-100 focus:outline-none focus:ring-2 focus:ring-moss-500 focus:ring-offset-2 focus:ring-offset-sand-50;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-ink-600 transition hover:bg-ink-100 hover:text-ink-800;
+  }
+
+  .eyebrow {
+    @apply text-xs font-semibold uppercase tracking-[0.18em] text-moss-700;
+  }
+
+  .section-heading {
+    @apply font-serif text-3xl leading-tight tracking-tight text-ink-900 sm:text-4xl;
+  }
+
+  .card {
+    @apply rounded-2xl bg-white ring-1 ring-ink-100 transition hover:shadow-lg hover:ring-ink-800/10;
+  }
+
+  /* Marquee */
+  .marquee-row {
+    @apply overflow-hidden;
+  }
+
+  .marquee-track {
+    display: flex;
+    gap: 0.75rem;
+    width: max-content;
+    animation-name: marquee-scroll;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+
+  .group\/marquee:hover .marquee-track {
+    animation-play-state: paused;
+  }
+
+  .marquee-tile {
+    @apply relative h-28 w-28 shrink-0 overflow-hidden rounded-xl bg-sand-100 ring-1 ring-ink-100 sm:h-32 sm:w-32 md:h-36 md:w-36;
+  }
+}
+
+@keyframes marquee-scroll {
+  from {
+    transform: translateX(0%);
+  }
+  to {
+    /* Tracks render tiles twice, so translating by -50% loops seamlessly. */
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none !important;
+  }
+}
