@@ -69,15 +69,32 @@ should be used.
 1. Sign up at <https://resend.com>. Free tier: 100 emails/day, 3 000/month.
 2. **API Keys** → **Create API Key** → name it `icoming-web`, scope
    **Sending access**. Copy the key (starts with `re_...`).
-3. For V1 you'll send from `onboarding@resend.dev` — no DNS setup
-   needed. When you want a real sender address like
-   `rfq@i-coming.com`:
+3. **⚠ Sandbox restriction on the default sender.** The
+   `onboarding@resend.dev` sender Resend gives you out of the box can
+   *only* send to the email address you used to register your Resend
+   account. Any other recipient is rejected with a 403 and the
+   message *"You can only send testing emails to your own email
+   address"*. This is a Resend policy, not a bug in our code.
+
+   Two ways to handle this:
+
+   - **For local testing only**: set `INQUIRY_TO_EMAIL` to the email
+     you signed up with, submit a test inquiry to confirm the
+     end-to-end pipeline works, then move on to domain verification
+     before handing sales a real staging URL.
+   - **For any real deployment**: verify a domain.
+
+4. **Verify a domain** (needed for production — and for routing
+   emails to `sale2@i-coming.com` or any other real address):
    - **Domains** → **Add Domain** → enter `i-coming.com` (or a
      subdomain like `rfq.i-coming.com`).
    - Resend shows the SPF, DKIM, and optional DMARC records to add to
      your domain registrar (where i-coming.com is managed).
    - After the records propagate (5 min – 24 h), Resend marks the
-     domain *Verified*. Then set `RESEND_FROM_EMAIL=ICOMing RFQ <rfq@i-coming.com>`.
+     domain *Verified*. Then set
+     `RESEND_FROM_EMAIL=ICOMing RFQ <rfq@i-coming.com>` in
+     `.env.local` and Vercel.
+   - With a verified domain you can send to any recipient.
 
 ## 5. Env vars
 
@@ -167,14 +184,35 @@ to the list below:
 **Success page shows `LOCAL-DEV-…` even after env vars are set**
 The Next.js dev server only reads `.env.local` on startup. Restart it.
 
-**Email not arriving**
-1. Check Resend dashboard → **Logs** — if Resend rejected the send
-   it'll show the reason.
-2. Check spam. `onboarding@resend.dev` is shared and has middling
-   deliverability; verify your own domain for reliable delivery.
-3. If nothing shows in Resend at all, confirm `RESEND_API_KEY` is set
-   in the environment the API route is running in (dev / Vercel) and
-   restart.
+**Email not arriving (DB insert succeeded)**
+
+The server log tells you which branch you're in:
+
+- `[inquiry] Resend returned error { statusCode: 403, name: 'validation_error', message: 'You can only send testing emails to your own email address (…)' }`
+  You're still on the sandbox sender `onboarding@resend.dev`, which
+  can only deliver to the Resend account's own email. Either set
+  `INQUIRY_TO_EMAIL` to that address for local testing, or verify a
+  domain (see §4 step 4) and set `RESEND_FROM_EMAIL`.
+
+- `[inquiry] Resend not configured — skipping email notification`
+  `RESEND_API_KEY` isn't set in the process environment. Add it to
+  `.env.local` and restart `npm run dev` (the dev server only reads
+  the file at startup).
+
+- `[inquiry] Resend returned error { statusCode: 429, … }`
+  You've hit the free tier's rate limit. Wait or upgrade.
+
+- No Resend line at all, just the successful POST 200
+  The code didn't call Resend — usually because `getResend()`
+  returned null silently. Restart the dev server to re-read env.
+
+Also:
+- Check spam. `onboarding@resend.dev` has middling reputation; even
+  when Resend accepts the send, Gmail/Outlook/corporate filters may
+  route the first message to junk.
+- Cross-check in Resend dashboard → **Logs** — every attempted send
+  (success or failure) shows up there, with the exact reason on
+  failures.
 
 **Two submissions got the same request ID**
 Shouldn't happen — the sequence is Postgres-atomic. If it did,
