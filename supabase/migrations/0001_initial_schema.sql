@@ -122,3 +122,26 @@ create policy "public can insert inquiry_uploads"
   on public.inquiry_uploads for insert
   to anon, authenticated
   with check (true);
+
+-- ---------------------------------------------------------------------------
+-- Grants.
+-- ---------------------------------------------------------------------------
+-- Supabase's default privileges usually cover this, but on some projects
+-- (especially newer ones under the sb_publishable / sb_secret key model)
+-- tables created via the SQL editor can land without grants — leading to
+-- `permission denied for table ...` errors even when the API key is correct.
+-- Explicit grants here make the setup deterministic regardless of the
+-- project's default-privilege configuration.
+grant select, insert, update, delete
+  on table public.inquiries, public.inquiry_items, public.inquiry_uploads
+  to anon, authenticated;
+
+grant all
+  on table public.inquiries, public.inquiry_items, public.inquiry_uploads
+  to service_role;
+
+-- The request_id default expression calls nextval('rfq_seq'), which needs
+-- USAGE on the sequence for whichever role performs the insert.
+grant usage, select
+  on sequence public.rfq_seq
+  to anon, authenticated, service_role;

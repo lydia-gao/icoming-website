@@ -14,7 +14,7 @@ payload server-side. No persistence, no email.
 
 1. Sign in at <https://supabase.com> and click **New project**.
 2. Organization: your personal org is fine.
-3. Project name: e.g. `icoming-rfq`.
+3. Project name: e.g. `icoming-db`.
 4. Database password: generate a strong one and save it to your
    password manager. (You'll rarely need it — Supabase gives you
    per-project API keys for app access.)
@@ -53,6 +53,9 @@ The **secret key** bypasses Row Level Security. **Never commit it,
 never expose it to the browser, never prefix it with `NEXT_PUBLIC_`.**
 The API route in `src/app/api/inquiry/route.ts` is the only place it
 should be used.
+
+`NEXT_PUBLIC_SUPABASE_URL` should look exactly like: https://abcdefghijklmnop.supabase.co 
+(no trailing slash, no /rest/v1, no /dashboard, no path at all — just the root origin)
 
 > **Older project?** If your dashboard still only shows the legacy
 > `anon` / `service_role` JWT keys (`eyJ...`), those work too. Set
@@ -123,13 +126,43 @@ submissions).
 ## Troubleshooting
 
 **"Could not save inquiry" error in the browser**
-Usually a bad secret key or an RLS policy blocking the insert.
-Check the server logs for the Supabase error; if it mentions
-`permission denied`, confirm the migration applied cleanly (the
-policies are on the last page of `0001_initial_schema.sql`). If it
-mentions `Invalid API key`, double-check that `SUPABASE_SECRET_KEY`
-(or legacy `SUPABASE_SERVICE_ROLE_KEY`) matches the key shown in the
-dashboard — it's easy to accidentally paste the publishable key.
+Check the server logs for the underlying Supabase error and match it
+to the list below:
+
+- `PGRST125 — Invalid path specified in request URL`
+  `NEXT_PUBLIC_SUPABASE_URL` is wrong. Should be
+  `https://<project-ref>.supabase.co` (root origin, no `/rest/v1`,
+  no trailing path). Easy mistake: pasting the **dashboard URL**
+  (`https://supabase.com/dashboard/project/<ref>`) instead of the
+  project URL.
+
+- `42501 — permission denied for table inquiries`
+  The role performing the insert lacks privileges on the table.
+  If you ran an older copy of the migration (before grants were
+  added), paste this into the Supabase SQL editor and re-run it:
+  ```sql
+  grant select, insert, update, delete
+    on table public.inquiries, public.inquiry_items, public.inquiry_uploads
+    to anon, authenticated;
+  grant all
+    on table public.inquiries, public.inquiry_items, public.inquiry_uploads
+    to service_role;
+  grant usage, select
+    on sequence public.rfq_seq
+    to anon, authenticated, service_role;
+  ```
+  Also double-check you haven't swapped `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+  and `SUPABASE_SECRET_KEY` — their prefixes (`sb_publishable_` vs
+  `sb_secret_`) make the swap easy to catch.
+
+- `PGRST116 / PGRST205 / "relation does not exist"`
+  The migration didn't apply. Re-run `0001_initial_schema.sql` in
+  the SQL editor and watch for any SQL errors.
+
+- `Invalid API key` / `401`
+  The secret key is malformed (newline, trailing whitespace) or from
+  a different project than the URL. Re-copy both from the dashboard,
+  restart the dev server.
 
 **Success page shows `LOCAL-DEV-…` even after env vars are set**
 The Next.js dev server only reads `.env.local` on startup. Restart it.
