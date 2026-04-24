@@ -107,15 +107,10 @@ const en = {
 
   inquiryPage: {
     loading: "Loading your inquiry…",
-    successHeading: "Thanks — your inquiry is in.",
-    successBody:
-      "A sales contact will reply within one business day. In the meantime, feel free to keep browsing our products.",
-    keepBrowsing: "Keep browsing",
-    backToHome: "Back to home",
     eyebrow: "Inquiry",
     heading: "Your inquiry basket",
     intro:
-      "Saved products travel with you across the site. Add any notes, fill in your details, and our sales team will follow up through your preferred channel.",
+      "Saved products travel with you across the site. Add any notes, fill in your details, and our sales team will follow up by email.",
     savedProducts: (count: number) => `Saved products (${count})`,
     clearAll: "Clear all",
     emptyBasketA: "Nothing saved yet. Browse the catalog and click",
@@ -128,13 +123,29 @@ const en = {
     yourDetailsNote: "We'll reply within one business day.",
     form: {
       name: "Name *",
-      company: "Company",
       email: "Email *",
-      country: "Country",
-      whatsapp: "WhatsApp",
-      whatsappPlaceholder: "Optional",
-      channel: "Preferred reply channel",
-      channelOptions: { email: "Email", whatsapp: "WhatsApp", phone: "Phone" },
+      company: "Company",
+      preferredContact: "Preferred faster contact method",
+      preferredContactHelp:
+        "Optional — a quicker channel for sales to reach you.",
+      contactMethodOptions: {
+        none: "— None —",
+        whatsapp: "WhatsApp (recommended)",
+        wechat: "WeChat",
+        phone: "Phone",
+        telegram: "Telegram",
+        line: "Line",
+        other: "Other",
+      },
+      contactHandleLabels: {
+        whatsapp: "WhatsApp number",
+        wechat: "WeChat ID",
+        phone: "Phone number",
+        telegram: "Telegram username",
+        line: "Line ID",
+        other: "Contact details",
+      },
+      otherPlatformLabel: "Platform name",
       message: "Message",
       messagePlaceholder:
         "Quantity, target market, customization needs, timeline…",
@@ -142,6 +153,23 @@ const en = {
       submitting: "Sending…",
       orEmailDirectly: "Or email us directly at",
     },
+    success: {
+      heading: "Your inquiry has been submitted successfully.",
+      requestIdLabel: "Request ID",
+      emailNotice:
+        "Our sales team has been notified and will follow up through your provided email.",
+      extraContactNotice:
+        "If you provided additional contact methods such as WhatsApp or other platforms, our sales team may also use those for faster communication.",
+      fasterFollowupHeading: "Want faster follow-up?",
+      whatsappButton: "Chat with us on WhatsApp",
+      keepBrowsing: "Keep browsing",
+      backToHome: "Back to home",
+    },
+  },
+
+  whatsapp: {
+    shortLabel: "WhatsApp",
+    ariaLabel: "Chat with us on WhatsApp",
   },
 
   notFound: {
@@ -262,15 +290,10 @@ const zh: typeof en = {
 
   inquiryPage: {
     loading: "正在加载您的询盘…",
-    successHeading: "已收到您的询盘,感谢!",
-    successBody:
-      "销售同事将在一个工作日内回复。与此同时,欢迎继续浏览我们的产品。",
-    keepBrowsing: "继续浏览",
-    backToHome: "返回首页",
     eyebrow: "询盘",
     heading: "您的询盘清单",
     intro:
-      "您收藏的产品会在全站保留。添加备注并填写联系方式后,销售团队会通过您指定的渠道跟进。",
+      "您收藏的产品会在全站保留。添加备注并填写联系方式后,销售团队会通过邮件与您跟进。",
     savedProducts: (count: number) => `已收藏产品(${count})`,
     clearAll: "全部清除",
     emptyBasketA: "尚未收藏任何产品。浏览目录时,点击产品上的",
@@ -283,19 +306,51 @@ const zh: typeof en = {
     yourDetailsNote: "我们将在一个工作日内回复。",
     form: {
       name: "姓名 *",
-      company: "公司名称",
       email: "邮箱 *",
-      country: "国家/地区",
-      whatsapp: "WhatsApp",
-      whatsappPlaceholder: "选填",
-      channel: "首选回复渠道",
-      channelOptions: { email: "邮箱", whatsapp: "WhatsApp", phone: "电话" },
+      company: "公司名称",
+      preferredContact: "偏好的快速联系方式",
+      preferredContactHelp: "选填 — 销售可以通过这个渠道更快地联系您。",
+      contactMethodOptions: {
+        none: "— 不指定 —",
+        whatsapp: "WhatsApp(推荐)",
+        wechat: "微信",
+        phone: "电话",
+        telegram: "Telegram",
+        line: "Line",
+        other: "其他",
+      },
+      contactHandleLabels: {
+        whatsapp: "WhatsApp 号码",
+        wechat: "微信号",
+        phone: "电话号码",
+        telegram: "Telegram 用户名",
+        line: "Line ID",
+        other: "联系方式",
+      },
+      otherPlatformLabel: "平台名称",
       message: "留言",
       messagePlaceholder: "数量、目标市场、定制需求、交期…",
       submit: "提交询盘",
       submitting: "发送中…",
       orEmailDirectly: "或直接发送邮件至",
     },
+    success: {
+      heading: "您的询盘已成功提交。",
+      requestIdLabel: "请求编号",
+      emailNotice:
+        "销售团队已收到通知,将通过您提供的邮箱与您跟进。",
+      extraContactNotice:
+        "如您填写了其他联系方式(如 WhatsApp 或其他平台),销售团队也可能通过这些渠道更快地与您沟通。",
+      fasterFollowupHeading: "希望更快回复?",
+      whatsappButton: "在 WhatsApp 上联系我们",
+      keepBrowsing: "继续浏览",
+      backToHome: "返回首页",
+    },
+  },
+
+  whatsapp: {
+    shortLabel: "WhatsApp",
+    ariaLabel: "在 WhatsApp 上联系我们",
   },
 
   notFound: {

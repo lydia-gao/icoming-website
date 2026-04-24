@@ -67,6 +67,14 @@ src/
     i18n.ts               Locale type, `localePath`, `swapLocale`
     locale-context.tsx    <LocaleProvider> + useLocale()
     inquiry-context.tsx   Saved-products state (localStorage-backed)
+    supabase.ts           Server-only service-role client (null if unset)
+    resend.ts             Email client + recipient/from resolution
+    inquiry-email.ts      Transactional notification template + send
+    whatsapp.ts           wa.me deeplink builder + message templates
+
+supabase/
+  migrations/
+    0001_initial_schema.sql   Inquiries, items, uploads, RLS, request_id seq
 ```
 
 ## Content workflow
@@ -89,17 +97,32 @@ not silently fabricated. The full list of open items is in
 1. User browses products, clicks **Save** on any card (persists in
    localStorage across pages and across English ↔ Chinese switches).
 2. User visits **/inquiry** (or **/zh/inquiry**), reviews saved items,
-   adds per-item notes, fills out contact details, picks preferred
-   reply channel (email / WhatsApp / phone).
+   adds per-item notes, fills out **Name + Email** (required) plus
+   optional **Company**, optional **preferred faster contact method**
+   (WhatsApp / WeChat / Phone / Telegram / Line / Other) with a
+   dynamic handle field, and an optional general **Message**.
 3. On submit, the browser POSTs to `/api/inquiry`.
-4. The server logs the submission (visible in Vercel logs) and returns
-   `{ ok: true }`. **Email delivery is intentionally not wired yet** —
-   V1 ships as a captured-lead-to-logs flow. Swap in a provider by
-   editing `src/app/api/inquiry/route.ts` (see the comment there).
+4. The server:
+   - Inserts the inquiry + line items into Supabase Postgres.
+   - Generates a `RFQ-{YYYY}-{00001}` request ID via a Postgres sequence.
+   - Fires a Resend email to the sales team (`INQUIRY_TO_EMAIL`).
+   - Returns `{ ok: true, requestId }`.
+5. The success page shows the request ID and a pre-filled
+   **Chat with us on WhatsApp** button that deeplinks into WhatsApp
+   with the request ID + buyer name + saved products in the message body.
 
-The `INQUIRY_TO_EMAIL` environment variable is reserved for the future
-email routing; nothing breaks if it's unset (falls back to
-`sale1@i-coming.com`).
+A persistent WhatsApp CTA (header pill on desktop, floating bottom-right
+on mobile) sends buyers into WhatsApp with a generic pre-filled message
+at any time — independent of the inquiry flow.
+
+**Graceful fallback**: if `SUPABASE_*` env vars are unset, the API
+returns a synthetic `LOCAL-DEV-…` request ID and logs the payload
+instead of persisting. If `RESEND_API_KEY` is unset, emails are
+silently skipped. This keeps local dev working without any account
+setup, and makes the app robust when a provider outage hits.
+
+See [`docs/PHASE-1-SETUP.md`](docs/PHASE-1-SETUP.md) for the one-time
+Supabase + Resend configuration.
 
 ## i18n at a glance
 
@@ -124,19 +147,31 @@ config — it should Just Work on Vercel.
    - **Build command:** `npm run build` (default)
    - **Output directory:** `.next` (default)
    - **Install command:** `npm install` (default)
-4. (Optional) Add environment variables:
-   - `INQUIRY_TO_EMAIL` — address that server logs reference as the
-     destination. Unset is fine for the preview deployment.
-   - When you wire a real email provider, add its keys here (e.g.
-     `RESEND_API_KEY`). See `.env.example` for the reserved names.
-5. Deploy. Preview URLs cover all routes under `/` and `/zh/*`.
-6. On the first deploy, verify `/`, `/zh`, `/products`,
-   `/zh/products/promotional-cotton-canvas-tote`, `/inquiry`,
-   `/zh/contact`, and try submitting the inquiry form — you should see
-   the submission in the Vercel **Runtime Logs** tab for
-   `/api/inquiry`.
+4. Add environment variables (**Project → Settings → Environment
+   Variables**). All are technically optional — missing ones trigger
+   the graceful fallback — but you want these set for a real preview:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY` *(server-only; don't prefix with NEXT_PUBLIC)*
+   - `RESEND_API_KEY`
+   - `INQUIRY_TO_EMAIL` *(defaults to `sale2@i-coming.com`; comma-separated for multiple recipients)*
+   - `RESEND_FROM_EMAIL` *(optional; defaults to Resend's sandbox sender)*
 
-No database, no cron, no edge middleware, no custom regions needed.
+   See [`docs/PHASE-1-SETUP.md`](docs/PHASE-1-SETUP.md) for how to
+   create the Supabase project, apply the schema, and set up Resend.
+5. Deploy. Preview URLs cover all routes under `/` and `/zh/*`.
+6. On the first deploy, verify:
+   - `/`, `/zh`, `/products`, `/zh/products/promotional-cotton-canvas-tote`,
+     `/inquiry`, `/zh/contact` all render correctly.
+   - Submit the inquiry form end-to-end. Expect a real
+     `RFQ-{year}-{nnnnn}` request ID, a row in the Supabase
+     `inquiries` table, a notification email at the configured address,
+     and a working **Chat with us on WhatsApp** deeplink on the success
+     page.
+   - The floating WhatsApp button on mobile and the pill in the desktop
+     header both open WhatsApp with a generic pre-filled message.
+
+No cron, no edge middleware, no custom regions needed.
 
 ## Known limitations (V1)
 
@@ -144,8 +179,10 @@ No database, no cron, no edge middleware, no custom regions needed.
   `<main lang="zh-CN">` for screen-reader correctness. Fixing this to
   vary per locale requires either a `[locale]` dynamic segment at the
   root or middleware with header injection — deferred.
-- **Inquiry emails are not delivered** — submissions are logged only.
-  Wire a provider before go-live (see the route file).
+- **Inquiry emails are sent from `onboarding@resend.dev`** by default.
+  Deliverability is workable but not great (expect some spam folders
+  on first send). Verify a real domain (e.g. `rfq@i-coming.com`) in
+  Resend and set `RESEND_FROM_EMAIL` before go-live.
 - **Specs, MOQ, lead-time, cert validity** are rendered as
   "To be provided" placeholders until the business team fills them in.
   See `CONTENT-TODO.md`.
@@ -153,3 +190,6 @@ No database, no cron, no edge middleware, no custom regions needed.
   rest after direction is approved.
 - **Factory/team photography** is limited; the biggest trust lift
   before go-live is a half-day photoshoot (see `CONTENT-TODO.md` §6).
+- **Product detail page is pre-variant** — no quantity, size/color
+  pickers, tier pricing, or file uploads yet. That's Phase 2
+  (see roadmap).

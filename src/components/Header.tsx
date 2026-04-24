@@ -9,6 +9,7 @@ import { useLocale } from "@/lib/locale-context";
 import { localePath } from "@/lib/i18n";
 import { InquiryBadge } from "./InquiryBadge";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { WhatsAppButton } from "./WhatsAppButton";
 
 export function Header() {
   const locale = useLocale();
@@ -67,6 +68,7 @@ export function Header() {
           <Link href={contactHref} className="btn-primary hidden md:inline-flex">
             {ui.getQuote}
           </Link>
+          <WhatsAppButton variant="header" />
           <span className="hidden md:inline-flex">
             <LanguageSwitcher />
           </span>

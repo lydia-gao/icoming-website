@@ -7,13 +7,36 @@ import { useInquiry } from "@/lib/inquiry-context";
 import { localizedCompany } from "@/data/company";
 import { uiContent } from "@/content/ui";
 import { localePath, type Locale } from "@/lib/i18n";
+import {
+  companyWhatsappNumber,
+  inquiryWhatsappMessage,
+  whatsappDeeplink,
+} from "@/lib/whatsapp";
 
 type FormState = "idle" | "submitting" | "success" | "error";
+
+type ContactMethod =
+  | ""
+  | "whatsapp"
+  | "wechat"
+  | "phone"
+  | "telegram"
+  | "line"
+  | "other";
+
+type SuccessData = {
+  requestId: string;
+  name: string;
+  company?: string;
+  productNames: string[];
+};
 
 export function InquiryView({ locale }: { locale: Locale }) {
   const { items, hydrated, remove, updateNote, clear } = useInquiry();
   const [formState, setFormState] = useState<FormState>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [preferredContact, setPreferredContact] = useState<ContactMethod>("");
+  const [successData, setSuccessData] = useState<SuccessData | null>(null);
   const company = localizedCompany(locale);
   const ui = uiContent[locale].inquiryPage;
 
@@ -22,6 +45,7 @@ export function InquiryView({ locale }: { locale: Locale }) {
       items.map((i) => ({
         slug: i.slug,
         name: i.name,
+        image: i.image,
         note: i.note ?? "",
       })),
     [items],
@@ -34,16 +58,25 @@ export function InquiryView({ locale }: { locale: Locale }) {
 
     const form = event.currentTarget;
     const formData = new FormData(form);
+    const methodRaw = (formData.get("contactMethod") as string) || "";
+    const method = methodRaw === "" ? undefined : (methodRaw as Exclude<ContactMethod, "">);
+    const handle = ((formData.get("contactHandle") as string) || "").trim() || undefined;
+    const otherPlatform = ((formData.get("otherPlatform") as string) || "").trim() || undefined;
+
+    const submittedName = ((formData.get("name") as string) || "").trim();
+    const submittedCompany = ((formData.get("company") as string) || "").trim() || undefined;
+    const productNames = itemSummary.map((i) => i.name);
+
     const payload = {
-      name: formData.get("name"),
-      company: formData.get("company"),
-      email: formData.get("email"),
-      country: formData.get("country"),
-      whatsapp: formData.get("whatsapp"),
-      channel: formData.get("channel"),
-      message: formData.get("message"),
-      items: itemSummary,
       locale,
+      name: submittedName,
+      email: ((formData.get("email") as string) || "").trim(),
+      company: submittedCompany,
+      contactMethod: method,
+      contactHandle: handle,
+      otherPlatformName: method === "other" ? otherPlatform : undefined,
+      message: ((formData.get("message") as string) || "").trim() || undefined,
+      items: itemSummary,
     };
 
     try {
@@ -52,13 +85,24 @@ export function InquiryView({ locale }: { locale: Locale }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
+      const body = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        requestId?: string;
+        error?: string;
+      };
+      if (!res.ok || !body.ok || !body.requestId) {
         throw new Error(body.error ?? "Submission failed");
       }
-      setFormState("success");
+      setSuccessData({
+        requestId: body.requestId,
+        name: submittedName,
+        company: submittedCompany,
+        productNames,
+      });
       clear();
       form.reset();
+      setPreferredContact("");
+      setFormState("success");
     } catch (err) {
       setFormState("error");
       setErrorMessage(
@@ -77,7 +121,11 @@ export function InquiryView({ locale }: { locale: Locale }) {
     );
   }
 
-  if (formState === "success") {
+  if (formState === "success" && successData) {
+    const waHref = whatsappDeeplink(
+      companyWhatsappNumber,
+      inquiryWhatsappMessage(locale, successData),
+    );
     return (
       <section className="py-20">
         <div className="container-content max-w-2xl text-center">
@@ -87,21 +135,51 @@ export function InquiryView({ locale }: { locale: Locale }) {
             </svg>
           </div>
           <h1 className="mt-6 font-serif text-3xl tracking-tight text-ink-900 sm:text-4xl">
-            {ui.successHeading}
+            {ui.success.heading}
           </h1>
-          <p className="mt-4 text-ink-600">{ui.successBody}</p>
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
+
+          <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-moss-100 px-4 py-2">
+            <span className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-moss-700">
+              {ui.success.requestIdLabel}
+            </span>
+            <span className="font-mono text-sm font-semibold text-moss-800">
+              {successData.requestId}
+            </span>
+          </div>
+
+          <p className="mt-6 text-ink-600">{ui.success.emailNotice}</p>
+          <p className="mt-3 text-sm text-ink-400">{ui.success.extraContactNotice}</p>
+
+          <div className="mt-10 rounded-2xl bg-white p-6 ring-1 ring-ink-100">
+            <h2 className="font-serif text-lg font-semibold text-ink-900">
+              {ui.success.fasterFollowupHeading}
+            </h2>
+            <a
+              href={waHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-flex items-center justify-center gap-2 rounded-full bg-[#25D366] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1DA851]"
+            >
+              <WhatsAppIcon className="h-4 w-4" />
+              {ui.success.whatsappButton}
+            </a>
+          </div>
+
+          <div className="mt-10 flex flex-wrap justify-center gap-3">
             <Link href={localePath(locale, "/products")} className="btn-primary">
-              {ui.keepBrowsing}
+              {ui.success.keepBrowsing}
             </Link>
             <Link href={localePath(locale, "/")} className="btn-secondary">
-              {ui.backToHome}
+              {ui.success.backToHome}
             </Link>
           </div>
         </div>
       </section>
     );
   }
+
+  const handleLabel = ui.form.contactHandleLabels;
+  const handleConfig = contactMethodInputConfig(preferredContact);
 
   return (
     <>
@@ -201,25 +279,15 @@ export function InquiryView({ locale }: { locale: Locale }) {
               <p className="mt-1 text-sm text-ink-600">{ui.yourDetailsNote}</p>
 
               <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="block text-sm">
-                    <span className="font-medium text-ink-800">{ui.form.name}</span>
-                    <input
-                      name="name"
-                      required
-                      autoComplete="name"
-                      className="mt-1 block w-full rounded-lg border-ink-100 bg-sand-50 text-sm focus:border-moss-500 focus:ring-moss-500"
-                    />
-                  </label>
-                  <label className="block text-sm">
-                    <span className="font-medium text-ink-800">{ui.form.company}</span>
-                    <input
-                      name="company"
-                      autoComplete="organization"
-                      className="mt-1 block w-full rounded-lg border-ink-100 bg-sand-50 text-sm focus:border-moss-500 focus:ring-moss-500"
-                    />
-                  </label>
-                </div>
+                <label className="block text-sm">
+                  <span className="font-medium text-ink-800">{ui.form.name}</span>
+                  <input
+                    name="name"
+                    required
+                    autoComplete="name"
+                    className="mt-1 block w-full rounded-lg border-ink-100 bg-sand-50 text-sm focus:border-moss-500 focus:ring-moss-500"
+                  />
+                </label>
 
                 <label className="block text-sm">
                   <span className="font-medium text-ink-800">{ui.form.email}</span>
@@ -233,40 +301,84 @@ export function InquiryView({ locale }: { locale: Locale }) {
                   />
                 </label>
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="block text-sm">
-                    <span className="font-medium text-ink-800">{ui.form.country}</span>
-                    <input
-                      name="country"
-                      autoComplete="country-name"
-                      className="mt-1 block w-full rounded-lg border-ink-100 bg-sand-50 text-sm focus:border-moss-500 focus:ring-moss-500"
-                    />
-                  </label>
-                  <label className="block text-sm">
-                    <span className="font-medium text-ink-800">{ui.form.whatsapp}</span>
-                    <input
-                      name="whatsapp"
-                      type="tel"
-                      inputMode="tel"
-                      autoComplete="tel"
-                      placeholder={ui.form.whatsappPlaceholder}
-                      className="mt-1 block w-full rounded-lg border-ink-100 bg-sand-50 text-sm focus:border-moss-500 focus:ring-moss-500"
-                    />
-                  </label>
-                </div>
-
                 <label className="block text-sm">
-                  <span className="font-medium text-ink-800">{ui.form.channel}</span>
-                  <select
-                    name="channel"
-                    defaultValue="email"
+                  <span className="font-medium text-ink-800">{ui.form.company}</span>
+                  <input
+                    name="company"
+                    autoComplete="organization"
                     className="mt-1 block w-full rounded-lg border-ink-100 bg-sand-50 text-sm focus:border-moss-500 focus:ring-moss-500"
-                  >
-                    <option value="email">{ui.form.channelOptions.email}</option>
-                    <option value="whatsapp">{ui.form.channelOptions.whatsapp}</option>
-                    <option value="phone">{ui.form.channelOptions.phone}</option>
-                  </select>
+                  />
                 </label>
+
+                <div className="space-y-3 rounded-xl bg-sand-50/80 p-3 ring-1 ring-ink-100/70">
+                  <label className="block text-sm">
+                    <span className="font-medium text-ink-800">
+                      {ui.form.preferredContact}
+                    </span>
+                    <select
+                      name="contactMethod"
+                      value={preferredContact}
+                      onChange={(e) =>
+                        setPreferredContact(e.target.value as ContactMethod)
+                      }
+                      className="mt-1 block w-full rounded-lg border-ink-100 bg-white text-sm focus:border-moss-500 focus:ring-moss-500"
+                    >
+                      <option value="">{ui.form.contactMethodOptions.none}</option>
+                      <option value="whatsapp">
+                        {ui.form.contactMethodOptions.whatsapp}
+                      </option>
+                      <option value="wechat">
+                        {ui.form.contactMethodOptions.wechat}
+                      </option>
+                      <option value="phone">
+                        {ui.form.contactMethodOptions.phone}
+                      </option>
+                      <option value="telegram">
+                        {ui.form.contactMethodOptions.telegram}
+                      </option>
+                      <option value="line">
+                        {ui.form.contactMethodOptions.line}
+                      </option>
+                      <option value="other">
+                        {ui.form.contactMethodOptions.other}
+                      </option>
+                    </select>
+                    <span className="mt-1 block text-xs text-ink-400">
+                      {ui.form.preferredContactHelp}
+                    </span>
+                  </label>
+
+                  {preferredContact === "other" && (
+                    <label className="block text-sm">
+                      <span className="font-medium text-ink-800">
+                        {ui.form.otherPlatformLabel}
+                      </span>
+                      <input
+                        name="otherPlatform"
+                        required
+                        className="mt-1 block w-full rounded-lg border-ink-100 bg-white text-sm focus:border-moss-500 focus:ring-moss-500"
+                      />
+                    </label>
+                  )}
+
+                  {preferredContact !== "" && (
+                    <label className="block text-sm">
+                      <span className="font-medium text-ink-800">
+                        {preferredContact === "other"
+                          ? handleLabel.other
+                          : handleLabel[preferredContact]}
+                      </span>
+                      <input
+                        name="contactHandle"
+                        required
+                        type={handleConfig.type}
+                        inputMode={handleConfig.inputMode}
+                        autoComplete={handleConfig.autoComplete}
+                        className="mt-1 block w-full rounded-lg border-ink-100 bg-white text-sm focus:border-moss-500 focus:ring-moss-500"
+                      />
+                    </label>
+                  )}
+                </div>
 
                 <label className="block text-sm">
                   <span className="font-medium text-ink-800">{ui.form.message}</span>
@@ -307,5 +419,32 @@ export function InquiryView({ locale }: { locale: Locale }) {
         </div>
       </section>
     </>
+  );
+}
+
+function contactMethodInputConfig(method: ContactMethod): {
+  type: "tel" | "text";
+  inputMode: "tel" | "text";
+  autoComplete: string | undefined;
+} {
+  switch (method) {
+    case "whatsapp":
+    case "phone":
+      return { type: "tel", inputMode: "tel", autoComplete: "tel" };
+    default:
+      return { type: "text", inputMode: "text", autoComplete: undefined };
+  }
+}
+
+function WhatsAppIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 32 32"
+      className={className}
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M19.11 17.34c-.28-.14-1.64-.81-1.9-.9-.25-.1-.44-.14-.62.14-.18.27-.72.9-.88 1.08-.16.18-.33.2-.6.07-.28-.14-1.18-.43-2.24-1.38-.83-.74-1.38-1.65-1.54-1.93-.16-.28-.02-.43.12-.57.12-.13.28-.33.41-.5.14-.17.18-.28.28-.47.09-.19.05-.35-.02-.49-.07-.14-.62-1.5-.85-2.05-.22-.54-.45-.47-.62-.48-.16-.01-.35-.01-.53-.01-.18 0-.48.07-.73.34-.25.28-.96.93-.96 2.27 0 1.34.98 2.64 1.12 2.82.14.18 1.93 2.95 4.68 4.14.65.28 1.16.45 1.56.58.65.2 1.25.18 1.72.11.52-.08 1.64-.67 1.87-1.31.23-.64.23-1.19.16-1.31-.07-.11-.25-.18-.53-.32zM16 4C9.4 4 4 9.4 4 16c0 2.11.55 4.18 1.6 6L4 28l6.2-1.62A11.95 11.95 0 0016 28c6.6 0 12-5.4 12-12S22.6 4 16 4zm0 21.89c-1.84 0-3.64-.5-5.22-1.43l-.37-.22-3.68.96.98-3.58-.24-.38A9.89 9.89 0 016.1 16c0-5.46 4.44-9.9 9.9-9.9 5.46 0 9.9 4.44 9.9 9.9 0 5.46-4.44 9.89-9.9 9.89z" />
+    </svg>
   );
 }

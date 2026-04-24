@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { LocaleProvider } from "@/lib/locale-context";
 import { localizedCompany } from "@/data/company";
 import { uiContent } from "@/content/ui";
@@ -22,6 +23,7 @@ export default function ZhLayout({ children }: { children: React.ReactNode }) {
       <Header />
       <main lang="zh-CN" className="flex-1">{children}</main>
       <Footer locale="zh" />
+      <WhatsAppButton variant="floating" />
     </LocaleProvider>
   );
 }

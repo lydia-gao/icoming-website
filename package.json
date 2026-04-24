@@ -10,9 +10,11 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.104.1",
     "next": "15.5.15",
     "react": "19.0.0",
-    "react-dom": "19.0.0"
+    "react-dom": "19.0.0",
+    "resend": "^6.12.2"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.10",
