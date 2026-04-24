@@ -47,8 +47,21 @@ src/
     zh/                   Chinese routes (URLs prefixed with /zh)
       layout.tsx          LocaleProvider="zh" + Header + Footer
       (same page tree)
+    admin/                Internal admin dashboard (Phase 4)
+      (auth)/login/       Magic-link sign-in (public, allowlist-gated)
+      (gated)/            Auth-required routes
+        layout.tsx        Gate + admin chrome + sign out
+        inquiries/        List + filter/sort/search
+        inquiries/[id]/   Detail + editable status/assignee/notes
     api/
-      inquiry/route.ts    POST endpoint for inquiry form
+      inquiry/route.ts           Public POST for inquiry submissions
+      admin/
+        inquiry/[id]/route.ts    PATCH status/assignee/notes (admin)
+        attachment/[id]/route.ts Fresh signed URL for attachment (admin)
+      auth/signout/route.ts      Clears session cookie (admin)
+    auth/callback/route.ts       Magic-link code exchange target
+
+  middleware.ts           Refreshes Supabase session cookies per request
 
   views/                  One file per page; takes a `locale` prop.
                           Both English and Chinese route wrappers render
@@ -67,14 +80,19 @@ src/
     i18n.ts               Locale type, `localePath`, `swapLocale`
     locale-context.tsx    <LocaleProvider> + useLocale()
     inquiry-context.tsx   Saved-products state (localStorage-backed)
-    supabase.ts           Server-only service-role client (null if unset)
+    supabase.ts           Service-role client (server-only, RLS bypass)
+    supabase-browser.ts   Browser client for uploads + auth
+    supabase-server.ts    Cookies-aware server client + requireAdminRow()
     resend.ts             Email client + recipient/from resolution
     inquiry-email.ts      Transactional notification template + send
     whatsapp.ts           wa.me deeplink builder + message templates
+    uploads.ts            Browser file-upload helper + MIME/size validation
 
 supabase/
   migrations/
     0001_initial_schema.sql   Inquiries, items, uploads, RLS, request_id seq
+    0002_storage_bucket.sql   inquiry-uploads private bucket + policy
+    0003_admin.sql            admin_users allowlist + is_admin() + RLS
 ```
 
 ## Content workflow
@@ -124,6 +142,23 @@ account setup, and makes the app robust when a provider outage hits.
 
 See [`docs/PHASE-1-SETUP.md`](docs/PHASE-1-SETUP.md) for the one-time
 Supabase + Resend configuration.
+
+## Admin dashboard (`/admin`)
+
+Internal tool for sales to review and manage RFQs. Magic-link
+authentication, allowlist-gated via the `admin_users` table.
+
+Surfaces:
+- `/admin/login` — magic-link request form, public
+- `/admin/inquiries` — list with search (name/company/email/request-id),
+  status filter, sort, pagination
+- `/admin/inquiries/[id]` — full detail, variant chips, attachments
+  (fresh 1-hour signed URLs per click), editable
+  status / assignee / internal notes
+
+Setup is covered in [`docs/PHASE-4-ADMIN.md`](docs/PHASE-4-ADMIN.md):
+apply the `0003_admin.sql` migration, seed your email in `admin_users`,
+add Supabase Auth redirect URL allowlist entries, sign in.
 
 ## i18n at a glance
 
