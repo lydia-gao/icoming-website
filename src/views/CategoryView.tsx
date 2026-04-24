@@ -1,48 +1,25 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProductCard } from "@/components/ProductCard";
-import { categories, getCategoryBySlug } from "@/data/categories";
+import { getCategoryBySlug } from "@/data/categories";
 import { getProductsByCategory } from "@/data/products";
+import { uiContent } from "@/content/ui";
+import { localePath, type Locale } from "@/lib/i18n";
 
-type Params = { slug: string };
-
-export async function generateStaticParams(): Promise<Params[]> {
-  return categories.map((c) => ({ slug: c.slug }));
-}
-
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<Params>;
-}): Promise<Metadata> {
-  const { slug } = await params;
-  const category = getCategoryBySlug(slug);
-  if (!category) return {};
-  return {
-    title: category.name,
-    description: category.shortDescription,
-  };
-}
-
-export default async function CategoryPage({
-  params,
-}: {
-  params: Promise<Params>;
-}) {
-  const { slug } = await params;
-  const category = getCategoryBySlug(slug);
+export function CategoryView({ slug, locale }: { slug: string; locale: Locale }) {
+  const category = getCategoryBySlug(slug, locale);
   if (!category) notFound();
 
-  const items = getProductsByCategory(slug);
+  const items = getProductsByCategory(slug, locale);
+  const ui = uiContent[locale].categoryPage;
 
   return (
     <>
       <section className="border-b border-ink-100 bg-sand-100/60">
         <div className="container-content py-12 md:py-16">
           <nav aria-label="Breadcrumb" className="text-xs text-ink-400">
-            <Link href="/products" className="hover:text-ink-900">
-              Products
+            <Link href={localePath(locale, "/products")} className="hover:text-ink-900">
+              {ui.breadcrumbProducts}
             </Link>{" "}
             / <span className="text-ink-800">{category.name}</span>
           </nav>
@@ -59,18 +36,15 @@ export default async function CategoryPage({
         <div className="container-content">
           {items.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-ink-100 bg-white p-10 text-center">
-              <p className="text-ink-600">
-                We&apos;re uploading products for this category. Reach out for
-                samples and the full spec sheet.
-              </p>
-              <Link href="/contact" className="btn-primary mt-6">
-                Request samples
+              <p className="text-ink-600">{ui.emptyCategory}</p>
+              <Link href={localePath(locale, "/contact")} className="btn-primary mt-6">
+                {ui.requestSamples}
               </Link>
             </div>
           ) : (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {items.map((p) => (
-                <ProductCard key={p.slug} product={p} />
+                <ProductCard key={p.slug} product={p} locale={locale} />
               ))}
             </div>
           )}

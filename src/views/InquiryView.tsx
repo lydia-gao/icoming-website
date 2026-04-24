@@ -4,14 +4,18 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useInquiry } from "@/lib/inquiry-context";
-import { company } from "@/data/company";
+import { localizedCompany } from "@/data/company";
+import { uiContent } from "@/content/ui";
+import { localePath, type Locale } from "@/lib/i18n";
 
 type FormState = "idle" | "submitting" | "success" | "error";
 
-export default function InquiryPage() {
+export function InquiryView({ locale }: { locale: Locale }) {
   const { items, hydrated, remove, updateNote, clear } = useInquiry();
   const [formState, setFormState] = useState<FormState>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const company = localizedCompany(locale);
+  const ui = uiContent[locale].inquiryPage;
 
   const itemSummary = useMemo(
     () =>
@@ -39,6 +43,7 @@ export default function InquiryPage() {
       channel: formData.get("channel"),
       message: formData.get("message"),
       items: itemSummary,
+      locale,
     };
 
     try {
@@ -66,7 +71,7 @@ export default function InquiryPage() {
     return (
       <section className="py-16">
         <div className="container-content">
-          <div className="text-ink-400">Loading your inquiry…</div>
+          <div className="text-ink-400">{ui.loading}</div>
         </div>
       </section>
     );
@@ -82,15 +87,16 @@ export default function InquiryPage() {
             </svg>
           </div>
           <h1 className="mt-6 font-serif text-3xl tracking-tight text-ink-900 sm:text-4xl">
-            Thanks — your inquiry is in.
+            {ui.successHeading}
           </h1>
-          <p className="mt-4 text-ink-600">
-            A sales contact will reply within one business day. In the
-            meantime, feel free to keep browsing our products.
-          </p>
+          <p className="mt-4 text-ink-600">{ui.successBody}</p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link href="/products" className="btn-primary">Keep browsing</Link>
-            <Link href="/" className="btn-secondary">Back to home</Link>
+            <Link href={localePath(locale, "/products")} className="btn-primary">
+              {ui.keepBrowsing}
+            </Link>
+            <Link href={localePath(locale, "/")} className="btn-secondary">
+              {ui.backToHome}
+            </Link>
           </div>
         </div>
       </section>
@@ -101,13 +107,9 @@ export default function InquiryPage() {
     <>
       <section className="border-b border-ink-100 bg-sand-100/60">
         <div className="container-content py-12 md:py-16">
-          <div className="eyebrow">Inquiry</div>
-          <h1 className="section-heading mt-2">Your inquiry basket</h1>
-          <p className="mt-3 max-w-2xl text-ink-600">
-            Saved products travel with you across the site. Add any notes, fill
-            in your details, and our sales team will follow up through your
-            preferred channel.
-          </p>
+          <div className="eyebrow">{ui.eyebrow}</div>
+          <h1 className="section-heading mt-2">{ui.heading}</h1>
+          <p className="mt-3 max-w-2xl text-ink-600">{ui.intro}</p>
         </div>
       </section>
 
@@ -117,7 +119,7 @@ export default function InquiryPage() {
           <div>
             <div className="flex items-center justify-between">
               <h2 className="font-serif text-2xl text-ink-900">
-                Saved products ({items.length})
+                {ui.savedProducts(items.length)}
               </h2>
               {items.length > 0 && (
                 <button
@@ -125,7 +127,7 @@ export default function InquiryPage() {
                   onClick={clear}
                   className="text-sm text-ink-400 hover:text-clay-600"
                 >
-                  Clear all
+                  {ui.clearAll}
                 </button>
               )}
             </div>
@@ -133,12 +135,14 @@ export default function InquiryPage() {
             {items.length === 0 ? (
               <div className="mt-6 rounded-2xl border border-dashed border-ink-100 bg-white p-10 text-center">
                 <p className="text-ink-600">
-                  Nothing saved yet. Browse the catalog and click{" "}
-                  <span className="font-medium">Save</span> on any product you
-                  want to discuss.
+                  {ui.emptyBasketA}{" "}
+                  <span className="font-medium">
+                    {uiContent[locale].saveButton.save}
+                  </span>{" "}
+                  {ui.emptyBasketB}
                 </p>
-                <Link href="/products" className="btn-primary mt-6">
-                  Browse products
+                <Link href={localePath(locale, "/products")} className="btn-primary mt-6">
+                  {ui.browseProducts}
                 </Link>
               </div>
             ) : (
@@ -160,7 +164,7 @@ export default function InquiryPage() {
                     <div className="flex-1">
                       <div className="flex items-start justify-between gap-3">
                         <Link
-                          href={`/products/${item.slug}`}
+                          href={localePath(locale, `/products/${item.slug}`)}
                           className="font-semibold text-ink-900 hover:underline"
                         >
                           {item.name}
@@ -168,16 +172,16 @@ export default function InquiryPage() {
                         <button
                           type="button"
                           onClick={() => remove(item.slug)}
-                          aria-label={`Remove ${item.name}`}
+                          aria-label={ui.removeAria(item.name)}
                           className="text-xs text-ink-400 hover:text-clay-600"
                         >
-                          Remove
+                          {ui.remove}
                         </button>
                       </div>
                       <textarea
                         defaultValue={item.note ?? ""}
                         onBlur={(e) => updateNote(item.slug, e.target.value)}
-                        placeholder="Optional notes: qty, color, print, timeline…"
+                        placeholder={ui.notesPlaceholder}
                         rows={2}
                         className="mt-2 w-full resize-y rounded-lg border-ink-100 bg-sand-50 px-3 py-2 text-sm text-ink-800 placeholder:text-ink-400 focus:border-moss-500 focus:ring-moss-500"
                       />
@@ -192,80 +196,84 @@ export default function InquiryPage() {
           <aside>
             <div className="rounded-2xl bg-white p-6 ring-1 ring-ink-100">
               <h2 className="font-serif text-xl font-semibold text-ink-900">
-                Your details
+                {ui.yourDetails}
               </h2>
-              <p className="mt-1 text-sm text-ink-600">
-                We&apos;ll reply within one business day.
-              </p>
+              <p className="mt-1 text-sm text-ink-600">{ui.yourDetailsNote}</p>
 
               <form onSubmit={handleSubmit} className="mt-6 space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className="block text-sm">
-                    <span className="font-medium text-ink-800">Name *</span>
+                    <span className="font-medium text-ink-800">{ui.form.name}</span>
                     <input
                       name="name"
                       required
+                      autoComplete="name"
                       className="mt-1 block w-full rounded-lg border-ink-100 bg-sand-50 text-sm focus:border-moss-500 focus:ring-moss-500"
                     />
                   </label>
                   <label className="block text-sm">
-                    <span className="font-medium text-ink-800">Company</span>
+                    <span className="font-medium text-ink-800">{ui.form.company}</span>
                     <input
                       name="company"
+                      autoComplete="organization"
                       className="mt-1 block w-full rounded-lg border-ink-100 bg-sand-50 text-sm focus:border-moss-500 focus:ring-moss-500"
                     />
                   </label>
                 </div>
 
                 <label className="block text-sm">
-                  <span className="font-medium text-ink-800">Email *</span>
+                  <span className="font-medium text-ink-800">{ui.form.email}</span>
                   <input
                     name="email"
                     type="email"
                     required
+                    inputMode="email"
+                    autoComplete="email"
                     className="mt-1 block w-full rounded-lg border-ink-100 bg-sand-50 text-sm focus:border-moss-500 focus:ring-moss-500"
                   />
                 </label>
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className="block text-sm">
-                    <span className="font-medium text-ink-800">Country</span>
+                    <span className="font-medium text-ink-800">{ui.form.country}</span>
                     <input
                       name="country"
+                      autoComplete="country-name"
                       className="mt-1 block w-full rounded-lg border-ink-100 bg-sand-50 text-sm focus:border-moss-500 focus:ring-moss-500"
                     />
                   </label>
                   <label className="block text-sm">
-                    <span className="font-medium text-ink-800">WhatsApp</span>
+                    <span className="font-medium text-ink-800">{ui.form.whatsapp}</span>
                     <input
                       name="whatsapp"
-                      placeholder="Optional"
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      placeholder={ui.form.whatsappPlaceholder}
                       className="mt-1 block w-full rounded-lg border-ink-100 bg-sand-50 text-sm focus:border-moss-500 focus:ring-moss-500"
                     />
                   </label>
                 </div>
 
                 <label className="block text-sm">
-                  <span className="font-medium text-ink-800">
-                    Preferred reply channel
-                  </span>
+                  <span className="font-medium text-ink-800">{ui.form.channel}</span>
                   <select
                     name="channel"
                     defaultValue="email"
                     className="mt-1 block w-full rounded-lg border-ink-100 bg-sand-50 text-sm focus:border-moss-500 focus:ring-moss-500"
                   >
-                    <option value="email">Email</option>
-                    <option value="whatsapp">WhatsApp</option>
-                    <option value="phone">Phone</option>
+                    <option value="email">{ui.form.channelOptions.email}</option>
+                    <option value="whatsapp">{ui.form.channelOptions.whatsapp}</option>
+                    <option value="phone">{ui.form.channelOptions.phone}</option>
                   </select>
                 </label>
 
                 <label className="block text-sm">
-                  <span className="font-medium text-ink-800">Message</span>
+                  <span className="font-medium text-ink-800">{ui.form.message}</span>
                   <textarea
                     name="message"
                     rows={4}
-                    placeholder="Quantity, target market, customization needs, timeline…"
+                    placeholder={ui.form.messagePlaceholder}
                     className="mt-1 block w-full rounded-lg border-ink-100 bg-sand-50 text-sm focus:border-moss-500 focus:ring-moss-500"
                   />
                 </label>
@@ -281,11 +289,11 @@ export default function InquiryPage() {
                   disabled={formState === "submitting"}
                   className="btn-primary w-full"
                 >
-                  {formState === "submitting" ? "Sending…" : "Send inquiry"}
+                  {formState === "submitting" ? ui.form.submitting : ui.form.submit}
                 </button>
 
                 <p className="text-center text-xs text-ink-400">
-                  Or email us directly at{" "}
+                  {ui.form.orEmailDirectly}{" "}
                   <a
                     href={`mailto:${company.contact.primaryEmail}`}
                     className="underline hover:text-ink-800"

@@ -1,7 +1,10 @@
 import type { Placeholder as PlaceholderType } from "@/content/_types";
+import { uiContent } from "@/content/ui";
+import type { Locale } from "@/lib/i18n";
 
 type Props = {
   placeholder: PlaceholderType;
+  locale: Locale;
   /** Size hint. "card" fills a content card; "inline" is a compact row. */
   size?: "card" | "inline";
   className?: string;
@@ -14,16 +17,19 @@ type Props = {
  */
 export function Placeholder({
   placeholder,
+  locale,
   size = "card",
   className = "",
 }: Props) {
+  const label = uiContent[locale].placeholder.toBeProvided;
+
   if (size === "inline") {
     return (
       <span
         className={`inline-flex items-center gap-1.5 rounded-full border border-dashed border-clay-500/60 bg-clay-500/5 px-2.5 py-1 text-xs font-medium text-clay-600 ${className}`}
       >
         <span className="inline-block h-1.5 w-1.5 rounded-full bg-clay-500" />
-        To be provided — {placeholder.label}
+        {label} — {placeholder.label}
       </span>
     );
   }
@@ -40,7 +46,7 @@ export function Placeholder({
         </div>
         <div className="min-w-0 flex-1">
           <div className="text-xs font-semibold uppercase tracking-[0.12em] text-clay-600">
-            To be provided
+            {label}
           </div>
           <div className="mt-1 font-medium text-ink-900">{placeholder.label}</div>
           <p className="mt-2 text-sm leading-relaxed text-ink-600">{placeholder.needs}</p>

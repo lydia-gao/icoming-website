@@ -1,17 +1,15 @@
 import Link from "next/link";
 import { capabilitiesContent } from "@/content/capabilities";
+import { uiContent } from "@/content/ui";
 import { Placeholder } from "@/components/Placeholder";
 import { isPlaceholder } from "@/content/_types";
+import { localePath, type Locale } from "@/lib/i18n";
 
-export const metadata = {
-  title: "Capabilities & Customization",
-  description:
-    "Materials, printing techniques, customization, and quality control for eco-friendly bag production.",
-};
-
-export default function CapabilitiesPage() {
+export function CapabilitiesView({ locale }: { locale: Locale }) {
   const { hero, materials, printing, moq, leadTime, qc, compliance, cta } =
-    capabilitiesContent;
+    capabilitiesContent[locale];
+  const placeholderLabel = uiContent[locale].placeholder.toBeProvided;
+  const resolveHref = (href: string) => localePath(locale, href);
 
   return (
     <>
@@ -59,7 +57,7 @@ export default function CapabilitiesPage() {
         </div>
       </section>
 
-      {/* MOQ + Lead time (both currently placeholders) */}
+      {/* MOQ + Lead time */}
       <section className="py-16 md:py-20">
         <div className="container-content grid gap-6 md:grid-cols-2">
           <div className="rounded-2xl bg-moss-700 p-8 text-white">
@@ -71,7 +69,7 @@ export default function CapabilitiesPage() {
               {isPlaceholder(moq.body) ? (
                 <div className="rounded-xl border border-dashed border-white/30 bg-white/[0.06] p-5">
                   <div className="text-xs font-semibold uppercase tracking-[0.12em] text-moss-300">
-                    To be provided
+                    {placeholderLabel}
                   </div>
                   <div className="mt-1 font-medium text-white">{moq.body.label}</div>
                   <p className="mt-2 text-sm text-white/80">{moq.body.needs}</p>
@@ -93,7 +91,7 @@ export default function CapabilitiesPage() {
               {isPlaceholder(leadTime.body) ? (
                 <div className="rounded-xl border border-dashed border-white/25 bg-white/[0.04] p-5">
                   <div className="text-xs font-semibold uppercase tracking-[0.12em] text-moss-300">
-                    To be provided
+                    {placeholderLabel}
                   </div>
                   <div className="mt-1 font-medium text-white">{leadTime.body.label}</div>
                   <p className="mt-2 text-sm text-ink-100/75">{leadTime.body.needs}</p>
@@ -120,7 +118,7 @@ export default function CapabilitiesPage() {
             {isPlaceholder(qc.stages) ? (
               <div className="rounded-2xl border border-dashed border-white/25 bg-white/[0.04] p-6">
                 <div className="text-xs font-semibold uppercase tracking-[0.12em] text-moss-300">
-                  To be provided
+                  {placeholderLabel}
                 </div>
                 <div className="mt-1 font-medium text-white">{qc.stages.label}</div>
                 <p className="mt-2 text-sm text-ink-100/75">{qc.stages.needs}</p>
@@ -141,7 +139,7 @@ export default function CapabilitiesPage() {
 
           <div className="md:col-span-7">
             {isPlaceholder(compliance.certifications) && (
-              <Placeholder placeholder={compliance.certifications} />
+              <Placeholder placeholder={compliance.certifications} locale={locale} />
             )}
           </div>
         </div>
@@ -156,10 +154,10 @@ export default function CapabilitiesPage() {
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-ink-100/70">{cta.body}</p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <Link href={cta.primary.href} className="btn-primary">
+              <Link href={resolveHref(cta.primary.href)} className="btn-primary">
                 {cta.primary.label}
               </Link>
-              <Link href={cta.secondary.href} className="btn-secondary">
+              <Link href={resolveHref(cta.secondary.href)} className="btn-secondary">
                 {cta.secondary.label}
               </Link>
             </div>

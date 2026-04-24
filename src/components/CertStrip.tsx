@@ -1,6 +1,7 @@
 import Image from "next/image";
 import type { Credential } from "@/content/_types";
 import { isPlaceholder } from "@/content/_types";
+import type { Locale } from "@/lib/i18n";
 import { Placeholder } from "./Placeholder";
 
 type Props = {
@@ -8,9 +9,10 @@ type Props = {
   heading: string;
   body?: string;
   credentials: Credential[];
+  locale: Locale;
 };
 
-export function CertStrip({ eyebrow, heading, body, credentials }: Props) {
+export function CertStrip({ eyebrow, heading, body, credentials, locale }: Props) {
   return (
     <section className="bg-sand-100/60 py-16 sm:py-24">
       <div className="container-content">
@@ -23,7 +25,7 @@ export function CertStrip({ eyebrow, heading, body, credentials }: Props) {
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {credentials.map((cred, i) => {
             if (isPlaceholder(cred)) {
-              return <Placeholder key={i} placeholder={cred} />;
+              return <Placeholder key={i} placeholder={cred} locale={locale} />;
             }
             return (
               <figure

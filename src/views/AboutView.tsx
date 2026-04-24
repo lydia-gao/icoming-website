@@ -1,16 +1,12 @@
 import Link from "next/link";
-import { company } from "@/data/company";
 import { aboutContent } from "@/content/about";
 import { isPlaceholder } from "@/content/_types";
 import { Placeholder } from "@/components/Placeholder";
+import { localePath, type Locale } from "@/lib/i18n";
 
-export const metadata = {
-  title: "About",
-  description: `${company.legalName} — eco-friendly bag manufacturer, founded ${company.foundedYear}.`,
-};
-
-export default function AboutPage() {
-  const { hero, story, timeline, values, events, cta } = aboutContent;
+export function AboutView({ locale }: { locale: Locale }) {
+  const { hero, story, timeline, values, events, cta } = aboutContent[locale];
+  const resolveHref = (href: string) => localePath(locale, href);
 
   return (
     <>
@@ -48,7 +44,7 @@ export default function AboutPage() {
           <ol className="mt-12 grid gap-6 md:grid-cols-4">
             {timeline.entries.map((entry, i) => {
               if (isPlaceholder(entry)) {
-                return <Placeholder key={i} placeholder={entry} />;
+                return <Placeholder key={i} placeholder={entry} locale={locale} />;
               }
               return (
                 <li key={i} className="rounded-2xl bg-white p-6 ring-1 ring-ink-100">
@@ -89,7 +85,7 @@ export default function AboutPage() {
           </div>
           <div className="mt-8 max-w-2xl">
             {isPlaceholder(events.body) ? (
-              <Placeholder placeholder={events.body} />
+              <Placeholder placeholder={events.body} locale={locale} />
             ) : (
               <p className="text-ink-600">{events.body}</p>
             )}
@@ -105,10 +101,10 @@ export default function AboutPage() {
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-ink-100/70">{cta.body}</p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <Link href={cta.primary.href} className="btn-primary">
+              <Link href={resolveHref(cta.primary.href)} className="btn-primary">
                 {cta.primary.label}
               </Link>
-              <Link href={cta.secondary.href} className="btn-secondary">
+              <Link href={resolveHref(cta.secondary.href)} className="btn-secondary">
                 {cta.secondary.label}
               </Link>
             </div>

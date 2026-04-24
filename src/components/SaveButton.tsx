@@ -1,6 +1,8 @@
 "use client";
 
 import { useInquiry } from "@/lib/inquiry-context";
+import { useLocale } from "@/lib/locale-context";
+import { uiContent } from "@/content/ui";
 
 type Props = {
   slug: string;
@@ -12,6 +14,8 @@ type Props = {
 
 export function SaveButton({ slug, name, image, variant = "card", className = "" }: Props) {
   const { hasItem, toggle, hydrated } = useInquiry();
+  const locale = useLocale();
+  const ui = uiContent[locale].saveButton;
   const saved = hydrated && hasItem(slug);
 
   const base =
@@ -23,12 +27,18 @@ export function SaveButton({ slug, name, image, variant = "card", className = ""
     ? "bg-moss-700 text-white hover:bg-moss-800"
     : "bg-white text-ink-800 ring-1 ring-ink-100 hover:ring-ink-800/30";
 
+  const label = saved
+    ? ui.saved
+    : variant === "full"
+    ? ui.saveToInquiry
+    : ui.save;
+
   return (
     <button
       type="button"
       onClick={() => toggle({ slug, name, image })}
       aria-pressed={saved}
-      aria-label={saved ? `Remove ${name} from inquiry` : `Save ${name} to inquiry`}
+      aria-label={saved ? ui.removeAria(name) : ui.saveAria(name)}
       className={`${base} ${style} ${className}`}
     >
       <svg
@@ -43,7 +53,7 @@ export function SaveButton({ slug, name, image, variant = "card", className = ""
       >
         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
       </svg>
-      {saved ? "Saved" : variant === "full" ? "Save to inquiry" : "Save"}
+      {label}
     </button>
   );
 }

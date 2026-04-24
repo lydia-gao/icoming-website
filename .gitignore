@@ -29,3 +29,5 @@ Reference Materials/.Temp/
 
 # Claude Code local settings (user-specific)
 .claude/
+
+notes/

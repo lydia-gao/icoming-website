@@ -2,15 +2,18 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "@/data/types";
 import { getCategoryBySlug } from "@/data/categories";
+import { uiContent } from "@/content/ui";
+import { localePath, type Locale } from "@/lib/i18n";
 import { SaveButton } from "./SaveButton";
 
-export function ProductCard({ product }: { product: Product }) {
-  const category = getCategoryBySlug(product.categorySlug);
+export function ProductCard({ product, locale }: { product: Product; locale: Locale }) {
+  const category = getCategoryBySlug(product.categorySlug, locale);
   const image = product.images[0];
+  const ui = uiContent[locale].productCard;
 
   return (
     <article className="card group flex flex-col overflow-hidden">
-      <Link href={`/products/${product.slug}`} className="block">
+      <Link href={localePath(locale, `/products/${product.slug}`)} className="block">
         <div className="relative aspect-[4/3] w-full overflow-hidden bg-sand-100">
           <Image
             src={image}
@@ -30,7 +33,10 @@ export function ProductCard({ product }: { product: Product }) {
         )}
 
         <h3 className="font-serif text-lg leading-snug text-ink-900">
-          <Link href={`/products/${product.slug}`} className="hover:underline decoration-moss-500 underline-offset-4">
+          <Link
+            href={localePath(locale, `/products/${product.slug}`)}
+            className="hover:underline decoration-moss-500 underline-offset-4"
+          >
             {product.name}
           </Link>
         </h3>
@@ -39,7 +45,7 @@ export function ProductCard({ product }: { product: Product }) {
 
         <div className="mt-auto flex items-center justify-between gap-2 pt-2">
           <div className="text-xs text-ink-400">
-            {product.moq ? <span>MOQ {product.moq}</span> : <span>Custom order</span>}
+            {product.moq ? <span>{ui.moq} {product.moq}</span> : <span>{ui.customOrder}</span>}
           </div>
           <SaveButton slug={product.slug} name={product.name} image={image} />
         </div>

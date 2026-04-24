@@ -1,11 +1,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Category } from "@/data/types";
+import { uiContent } from "@/content/ui";
+import { localePath, type Locale } from "@/lib/i18n";
 
-export function CategoryCard({ category }: { category: Category }) {
+export function CategoryCard({ category, locale }: { category: Category; locale: Locale }) {
+  const ui = uiContent[locale].categoryCard;
+
   return (
     <Link
-      href={`/categories/${category.slug}`}
+      href={localePath(locale, `/categories/${category.slug}`)}
       className="group relative block overflow-hidden rounded-2xl bg-sand-100 ring-1 ring-ink-100 transition hover:ring-ink-800/20"
     >
       <div className="relative aspect-[4/5] w-full">
@@ -25,7 +29,7 @@ export function CategoryCard({ category }: { category: Category }) {
             {category.shortDescription}
           </p>
           <div className="mt-3 inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.18em] text-moss-300">
-            Browse
+            {ui.browse}
             <span aria-hidden>→</span>
           </div>
         </div>

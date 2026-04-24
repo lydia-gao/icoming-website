@@ -1,14 +1,11 @@
 import Link from "next/link";
-import { company } from "@/data/company";
+import { localizedCompany } from "@/data/company";
 import { contactContent } from "@/content/contact";
+import { localePath, type Locale } from "@/lib/i18n";
 
-export const metadata = {
-  title: "Contact",
-  description: `Get in touch with ${company.brand} for quotes, samples, and custom projects.`,
-};
-
-export default function ContactPage() {
-  const { hero, channels, visit } = contactContent;
+export function ContactView({ locale }: { locale: Locale }) {
+  const company = localizedCompany(locale);
+  const { hero, channels, visit } = contactContent[locale];
 
   return (
     <>
@@ -21,8 +18,11 @@ export default function ContactPage() {
             </h1>
             <p className="mt-6 text-lg leading-relaxed text-ink-600">
               {hero.body}{" "}
-              <Link href="/inquiry" className="font-medium text-moss-700 underline decoration-moss-300 underline-offset-4 hover:text-moss-800">
-                Start an inquiry →
+              <Link
+                href={localePath(locale, "/inquiry")}
+                className="font-medium text-moss-700 underline decoration-moss-300 underline-offset-4 hover:text-moss-800"
+              >
+                {hero.startInquiryLink}
               </Link>
             </p>
           </div>
@@ -73,10 +73,10 @@ export default function ContactPage() {
 
             <div className="mt-8 flex flex-wrap gap-3">
               <a href={`mailto:${company.contact.primaryEmail}`} className="btn-primary">
-                Email sales
+                {visit.emailSales}
               </a>
-              <Link href="/inquiry" className="btn-secondary">
-                Inquiry basket
+              <Link href={localePath(locale, "/inquiry")} className="btn-secondary">
+                {visit.inquiryBasket}
               </Link>
             </div>
           </div>
@@ -84,7 +84,7 @@ export default function ContactPage() {
           <div className="md:col-span-7">
             <div className="overflow-hidden rounded-2xl bg-sand-100 ring-1 ring-ink-100">
               <iframe
-                title="Factory location — Wenzhou"
+                title={visit.mapTitle}
                 src="https://maps.google.com/maps?q=Wenzhou%20Zhejiang%20China&t=&z=11&ie=UTF8&iwloc=&output=embed"
                 width="100%"
                 height="420"

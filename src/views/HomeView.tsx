@@ -5,23 +5,29 @@ import { Marquee } from "@/components/Marquee";
 import { EditorialDuo } from "@/components/EditorialDuo";
 import { CertStrip } from "@/components/CertStrip";
 import { Placeholder } from "@/components/Placeholder";
-import { categories } from "@/data/categories";
+import { getLocalizedCategories } from "@/data/categories";
 import { getFeaturedProducts } from "@/data/products";
 import { homeContent, marqueeTiles } from "@/content/home";
 import { trustContent } from "@/content/trust";
+import { uiContent } from "@/content/ui";
 import { isPlaceholder } from "@/content/_types";
+import { localePath, type Locale } from "@/lib/i18n";
 
-export default function HomePage() {
-  const featured = getFeaturedProducts(4);
-  const featuredCategories = categories.slice(0, 8);
-  const { hero, heroMetrics, sections } = homeContent;
+export function HomeView({ locale }: { locale: Locale }) {
+  const featured = getFeaturedProducts(4, locale);
+  const featuredCategories = getLocalizedCategories(locale).slice(0, 8);
+  const { hero, heroMetrics, sections } = homeContent[locale];
+  const tiles = marqueeTiles[locale];
+  const ui = uiContent[locale].home;
+
+  const resolveHref = (href: string) => localePath(locale, href);
 
   return (
     <>
-      {/* HERO — headline + metrics on left, marquee on right */}
+      {/* HERO */}
       <section className="relative overflow-hidden border-b border-ink-100 bg-gradient-to-b from-sand-100 to-sand-50">
-        <div className="container-content grid items-center gap-12 py-16 md:grid-cols-12 md:py-24 lg:gap-16">
-          <div className="md:col-span-5">
+        <div className="container-content grid grid-cols-1 items-center gap-12 py-16 md:grid-cols-12 md:py-24 lg:gap-16">
+          <div className="min-w-0 md:col-span-5">
             <div className="eyebrow">{hero.eyebrow}</div>
             <h1 className="mt-4 font-serif text-4xl leading-[1.05] tracking-tight text-ink-900 sm:text-5xl lg:text-[3.5rem]">
               {hero.headline}
@@ -31,10 +37,10 @@ export default function HomePage() {
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href={hero.primaryCta.href} className="btn-primary">
+              <Link href={resolveHref(hero.primaryCta.href)} className="btn-primary">
                 {hero.primaryCta.label}
               </Link>
-              <Link href={hero.secondaryCta.href} className="btn-secondary">
+              <Link href={resolveHref(hero.secondaryCta.href)} className="btn-secondary">
                 {hero.secondaryCta.label}
               </Link>
             </div>
@@ -48,7 +54,7 @@ export default function HomePage() {
                         {m.label}
                       </dt>
                       <dd className="mt-1.5">
-                        <Placeholder placeholder={m} size="inline" />
+                        <Placeholder placeholder={m} locale={locale} size="inline" />
                       </dd>
                     </div>
                   );
@@ -67,10 +73,10 @@ export default function HomePage() {
             </dl>
           </div>
 
-          <div className="md:col-span-7">
-            <Marquee tiles={marqueeTiles} rows={3} speedSeconds={70} />
+          <div className="min-w-0 md:col-span-7">
+            <Marquee tiles={tiles} rows={3} speedSeconds={70} />
             <p className="mt-3 text-center text-xs text-ink-400">
-              A glimpse of our catalog — hover to pause.
+              {ui.marqueeCaption}
             </p>
           </div>
         </div>
@@ -85,14 +91,14 @@ export default function HomePage() {
               <h2 className="section-heading mt-2">{sections.categories.heading}</h2>
               <p className="mt-3 max-w-2xl text-ink-600">{sections.categories.body}</p>
             </div>
-            <Link href="/products" className="btn-ghost">
-              View all products →
+            <Link href={resolveHref("/products")} className="btn-ghost">
+              {ui.viewAllProducts}
             </Link>
           </div>
 
           <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {featuredCategories.map((c) => (
-              <CategoryCard key={c.slug} category={c} />
+              <CategoryCard key={c.slug} category={c} locale={locale} />
             ))}
           </div>
         </div>
@@ -117,14 +123,14 @@ export default function HomePage() {
                 <h2 className="section-heading mt-2">{sections.featured.heading}</h2>
                 <p className="mt-3 max-w-2xl text-ink-600">{sections.featured.body}</p>
               </div>
-              <Link href="/products" className="btn-ghost">
-                Browse all →
+              <Link href={resolveHref("/products")} className="btn-ghost">
+                {ui.browseAll}
               </Link>
             </div>
 
-            <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {featured.map((p) => (
-                <ProductCard key={p.slug} product={p} />
+                <ProductCard key={p.slug} product={p} locale={locale} />
               ))}
             </div>
           </div>
@@ -143,7 +149,7 @@ export default function HomePage() {
             </h2>
           </div>
 
-          <ol className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <ol className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {sections.process.steps.map((p) => (
               <li key={p.step} className="rounded-2xl bg-white/[0.04] p-6 ring-1 ring-white/10">
                 <div className="font-serif text-3xl font-semibold text-moss-300">{p.step}</div>
@@ -160,7 +166,8 @@ export default function HomePage() {
         eyebrow={sections.trust.eyebrow}
         heading={sections.trust.heading}
         body={sections.trust.body}
-        credentials={trustContent.credentials}
+        credentials={trustContent[locale].credentials}
+        locale={locale}
       />
 
       {/* FINAL CTA */}
@@ -174,10 +181,10 @@ export default function HomePage() {
               {sections.finalCta.body}
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <Link href={sections.finalCta.primary.href} className="btn-primary">
+              <Link href={resolveHref(sections.finalCta.primary.href)} className="btn-primary">
                 {sections.finalCta.primary.label}
               </Link>
-              <Link href={sections.finalCta.secondary.href} className="btn-secondary">
+              <Link href={resolveHref(sections.finalCta.secondary.href)} className="btn-secondary">
                 {sections.finalCta.secondary.label}
               </Link>
             </div>
