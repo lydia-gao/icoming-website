@@ -3,19 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import type {
-  Bilingual,
-  ProductColor,
-  ProductSpec,
-} from "@/lib/products-cms";
-
-type BilingualRow = { en: string; zh: string };
-type ColorRow = { name_en: string; name_zh: string; hex: string };
-type SpecRow = {
-  label_en: string;
-  label_zh: string;
-  value_en: string;
-  value_zh: string;
-};
+  BilingualRow,
+  ColorRow,
+  SpecRow,
+} from "./variant-helpers";
 
 type State = {
   sizes: BilingualRow[];
@@ -614,30 +605,3 @@ function isValidHex(value: string): boolean {
   return /^#?[0-9a-fA-F]{3,8}$/.test(trimmed);
 }
 
-// =============================================================================
-// Initial-state builders (called from the server page to map DB → form state)
-// =============================================================================
-
-export function bilingualToRows(items: Bilingual[] | null | undefined): BilingualRow[] {
-  if (!items) return [];
-  return items.map((b) => ({ en: b.en ?? "", zh: b.zh ?? "" }));
-}
-
-export function colorsToRows(items: ProductColor[] | null | undefined): ColorRow[] {
-  if (!items) return [];
-  return items.map((c) => ({
-    name_en: c.name_en ?? "",
-    name_zh: c.name_zh ?? "",
-    hex: c.hex ?? "",
-  }));
-}
-
-export function specsToRows(items: ProductSpec[] | null | undefined): SpecRow[] {
-  if (!items) return [];
-  return items.map((s) => ({
-    label_en: s.label_en ?? "",
-    label_zh: s.label_zh ?? "",
-    value_en: s.value_en ?? "",
-    value_zh: s.value_zh ?? "",
-  }));
-}

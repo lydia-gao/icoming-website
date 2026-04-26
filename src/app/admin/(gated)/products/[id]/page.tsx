@@ -14,12 +14,12 @@ import { PriceTiersEditor } from "./PriceTiersEditor";
 import { ProductActions } from "./ProductActions";
 import { ProductBasicsEditor } from "./ProductBasicsEditor";
 import { ProductImagesEditor } from "./ProductImagesEditor";
+import { VariantOptionsEditor } from "./VariantOptionsEditor";
 import {
   bilingualToRows,
   colorsToRows,
   specsToRows,
-  VariantOptionsEditor,
-} from "./VariantOptionsEditor";
+} from "./variant-helpers";
 
 export const metadata = { title: "Edit product" };
 
