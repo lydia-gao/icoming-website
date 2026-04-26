@@ -4,7 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useInquiry, type InquiryItem } from "@/lib/inquiry-context";
+import {
+  useInquiry,
+  type InquiryItem,
+  type StoredUpload,
+} from "@/lib/inquiry-context";
 import { localizedCompany } from "@/data/company";
 import { uiContent } from "@/content/ui";
 import { localePath, type Locale } from "@/lib/i18n";
@@ -19,12 +23,14 @@ import {
   MAX_UPLOAD_BYTES,
   uploadInquiryFile,
   type UploadKind,
-  type UploadResult,
 } from "@/lib/uploads";
 
 type FormState = "idle" | "submitting" | "error";
 
 const SUCCESS_STORAGE_PREFIX = "icoming.inquiry.success.";
+
+const ACCEPT_ATTR =
+  ".pdf,.png,.jpg,.jpeg,.svg,.ai,application/pdf,image/png,image/jpeg,image/svg+xml,application/postscript";
 
 type ContactMethod =
   | ""
@@ -35,13 +41,6 @@ type ContactMethod =
   | "line"
   | "other";
 
-type LocalAttachment = {
-  localId: string;
-  file: File;
-  kind: UploadKind;
-  error?: string;
-};
-
 type SuccessData = {
   requestId: string;
   name: string;
@@ -50,10 +49,19 @@ type SuccessData = {
   products: WhatsAppProduct[];
 };
 
-const MAX_ATTACHMENTS_PER_ITEM = 10;
-
 export function InquiryView({ locale }: { locale: Locale }) {
-  const { items, hydrated, remove, updateNote, clear } = useInquiry();
+  const {
+    items,
+    hydrated,
+    remove,
+    updateNote,
+    clear,
+    attachUpload,
+    removeUpload,
+    generalUploads,
+    attachGeneralUpload,
+    removeGeneralUpload,
+  } = useInquiry();
   const router = useRouter();
   const searchParams = useSearchParams();
   const submittedParam = searchParams?.get("submitted") ?? null;
@@ -61,9 +69,9 @@ export function InquiryView({ locale }: { locale: Locale }) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [preferredContact, setPreferredContact] = useState<ContactMethod>("");
   const [successData, setSuccessData] = useState<SuccessData | null>(null);
-  const [attachmentsBySlug, setAttachmentsBySlug] = useState<
-    Record<string, LocalAttachment[]>
-  >({});
+  const [uploadingItem, setUploadingItem] = useState<string | null>(null);
+  const [uploadingGeneral, setUploadingGeneral] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const company = localizedCompany(locale);
   const ui = uiContent[locale].inquiryPage;
 
@@ -85,55 +93,86 @@ export function InquiryView({ locale }: { locale: Locale }) {
     }
   }, [submittedParam]);
 
-  const attachmentStateSetter = (slug: string) => (
-    updater: (prev: LocalAttachment[]) => LocalAttachment[],
+  const validateAndPickError = (file: File): string | null => {
+    if (!isAcceptedFile(file)) return ui.uploads.wrongType(file.name);
+    if (file.size > MAX_UPLOAD_BYTES) return ui.uploads.tooLarge(file.name);
+    return null;
+  };
+
+  const uploadAndAttachToItem = async (
+    slug: string,
+    files: FileList | File[],
   ) => {
-    setAttachmentsBySlug((prev) => {
-      const next = { ...prev };
-      next[slug] = updater(next[slug] ?? []);
-      return next;
-    });
-  };
-
-  const handleFiles = (slug: string, files: FileList | File[]) => {
-    const current = attachmentsBySlug[slug] ?? [];
-    const remaining = MAX_ATTACHMENTS_PER_ITEM - current.length;
-    const accepted: LocalAttachment[] = [];
-    for (const file of Array.from(files).slice(0, Math.max(0, remaining))) {
-      const localId =
-        typeof crypto !== "undefined" && "randomUUID" in crypto
-          ? crypto.randomUUID()
-          : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-      let error: string | undefined;
-      if (!isAcceptedFile(file)) {
-        error = ui.uploads.wrongType(file.name);
-      } else if (file.size > MAX_UPLOAD_BYTES) {
-        error = ui.uploads.tooLarge(file.name);
+    setUploadingItem(slug);
+    setUploadError(null);
+    let anyFailed = false;
+    try {
+      for (const file of Array.from(files)) {
+        const err = validateAndPickError(file);
+        if (err) {
+          anyFailed = true;
+          setUploadError(err);
+          continue;
+        }
+        const result = await uploadInquiryFile(file, "reference");
+        if (result) {
+          attachUpload(slug, {
+            storagePath: result.storagePath,
+            originalFilename: result.originalFilename,
+            mimeType: result.mimeType,
+            sizeBytes: result.sizeBytes,
+            kind: result.kind,
+          });
+        } else {
+          anyFailed = true;
+        }
       }
-      accepted.push({ localId, file, kind: "reference", error });
+    } finally {
+      setUploadingItem(null);
     }
-    if (accepted.length > 0) {
-      attachmentStateSetter(slug)((prev) => [...prev, ...accepted]);
+    if (anyFailed) setUploadError(ui.uploads.uploadFailed);
+  };
+
+  const uploadAndAttachToGeneral = async (files: FileList | File[]) => {
+    setUploadingGeneral(true);
+    setUploadError(null);
+    let anyFailed = false;
+    try {
+      for (const file of Array.from(files)) {
+        const err = validateAndPickError(file);
+        if (err) {
+          anyFailed = true;
+          setUploadError(err);
+          continue;
+        }
+        const result = await uploadInquiryFile(file, "reference");
+        if (result) {
+          attachGeneralUpload({
+            storagePath: result.storagePath,
+            originalFilename: result.originalFilename,
+            mimeType: result.mimeType,
+            sizeBytes: result.sizeBytes,
+            kind: result.kind,
+          });
+        } else {
+          anyFailed = true;
+        }
+      }
+    } finally {
+      setUploadingGeneral(false);
     }
+    if (anyFailed) setUploadError(ui.uploads.uploadFailed);
   };
 
-  const removeAttachment = (slug: string, localId: string) => {
-    attachmentStateSetter(slug)((prev) => prev.filter((a) => a.localId !== localId));
-  };
-
-  const updateAttachmentKind = (slug: string, localId: string, kind: UploadKind) => {
-    attachmentStateSetter(slug)((prev) =>
-      prev.map((a) => (a.localId === localId ? { ...a, kind } : a)),
-    );
-  };
-
-  const itemSummary = useMemo(
+  const successProducts = useMemo<WhatsAppProduct[]>(
     () =>
-      items.map((i) => ({
-        slug: i.slug,
-        name: i.name,
-        image: i.image,
-        note: i.note ?? "",
+      items.map((item) => ({
+        name: item.name,
+        size: item.sizeCustom ?? item.size,
+        color: item.colorCustom ?? item.color,
+        material: item.materialCustom ?? item.material,
+        quantity: item.quantity,
+        priceSnapshot: item.priceSnapshot,
       })),
     [items],
   );
@@ -156,36 +195,6 @@ export function InquiryView({ locale }: { locale: Locale }) {
       ((formData.get("company") as string) || "").trim() || undefined;
     const submittedMessage =
       ((formData.get("message") as string) || "").trim() || undefined;
-
-    // Reject any attachments with pre-existing validation errors.
-    const hasBadFiles = Object.values(attachmentsBySlug)
-      .flat()
-      .some((a) => a.error);
-    if (hasBadFiles) {
-      setFormState("error");
-      setErrorMessage(ui.uploads.uploadFailed);
-      return;
-    }
-
-    // Upload attachments (browser → Supabase Storage) BEFORE calling our
-    // API. Each item's uploads are collected and passed through as metadata.
-    const uploadsBySlug: Record<string, UploadResult[]> = {};
-    const anyFiles = Object.values(attachmentsBySlug).some((a) => a.length > 0);
-    let uploadsFailed = false;
-
-    if (anyFiles) {
-      for (const [slug, attachments] of Object.entries(attachmentsBySlug)) {
-        uploadsBySlug[slug] = [];
-        for (const att of attachments) {
-          const result = await uploadInquiryFile(att.file, att.kind);
-          if (result) {
-            uploadsBySlug[slug].push(result);
-          } else {
-            uploadsFailed = true;
-          }
-        }
-      }
-    }
 
     const payload = {
       locale,
@@ -210,7 +219,7 @@ export function InquiryView({ locale }: { locale: Locale }) {
         quantity: item.quantity,
         priceSnapshot: item.priceSnapshot,
         tierLabel: item.tierLabel,
-        uploads: uploadsBySlug[item.slug]?.map((u) => ({
+        uploads: (item.uploads ?? []).map((u) => ({
           storagePath: u.storagePath,
           originalFilename: u.originalFilename,
           mimeType: u.mimeType,
@@ -218,16 +227,14 @@ export function InquiryView({ locale }: { locale: Locale }) {
           kind: u.kind,
         })),
       })),
+      generalUploads: generalUploads.map((u) => ({
+        storagePath: u.storagePath,
+        originalFilename: u.originalFilename,
+        mimeType: u.mimeType,
+        sizeBytes: u.sizeBytes,
+        kind: u.kind,
+      })),
     };
-
-    const successProducts: WhatsAppProduct[] = items.map((item) => ({
-      name: item.name,
-      size: item.sizeCustom ?? item.size,
-      color: item.colorCustom ?? item.color,
-      material: item.materialCustom ?? item.material,
-      quantity: item.quantity,
-      priceSnapshot: item.priceSnapshot,
-    }));
 
     try {
       const res = await fetch("/api/inquiry", {
@@ -261,16 +268,9 @@ export function InquiryView({ locale }: { locale: Locale }) {
         setSuccessData(success);
       }
       clear();
-      setAttachmentsBySlug({});
       form.reset();
       setPreferredContact("");
       setFormState("idle");
-      if (uploadsFailed) {
-        console.warn("[inquiry] some attachments failed to upload");
-      }
-      // Navigate to the success URL. useSearchParams triggers a re-read
-      // from sessionStorage via the effect above, which promotes
-      // successData and renders the success UI.
       router.replace(
         `${localePath(locale, "/inquiry")}?submitted=${encodeURIComponent(body.requestId)}`,
         { scroll: false },
@@ -374,10 +374,7 @@ export function InquiryView({ locale }: { locale: Locale }) {
               {items.length > 0 && (
                 <button
                   type="button"
-                  onClick={() => {
-                    clear();
-                    setAttachmentsBySlug({});
-                  }}
+                  onClick={() => clear()}
                   className="text-sm text-ink-400 hover:text-clay-600"
                 >
                   {ui.clearAll}
@@ -405,22 +402,33 @@ export function InquiryView({ locale }: { locale: Locale }) {
                     key={item.slug}
                     item={item}
                     locale={locale}
-                    onRemove={() => {
-                      remove(item.slug);
-                      attachmentStateSetter(item.slug)(() => []);
-                    }}
+                    isUploading={uploadingItem === item.slug}
+                    onRemove={() => remove(item.slug)}
                     onNoteChange={(note) => updateNote(item.slug, note)}
-                    attachments={attachmentsBySlug[item.slug] ?? []}
-                    onFilesAdded={(files) => handleFiles(item.slug, files)}
-                    onRemoveAttachment={(localId) =>
-                      removeAttachment(item.slug, localId)
+                    onUploadFiles={(files) =>
+                      uploadAndAttachToItem(item.slug, files)
                     }
-                    onChangeKind={(localId, kind) =>
-                      updateAttachmentKind(item.slug, localId, kind)
+                    onRemoveUpload={(storagePath) =>
+                      removeUpload(item.slug, storagePath)
                     }
                   />
                 ))}
               </ul>
+            )}
+
+            {/* General order references */}
+            <GeneralUploads
+              locale={locale}
+              uploads={generalUploads}
+              isUploading={uploadingGeneral}
+              onUploadFiles={uploadAndAttachToGeneral}
+              onRemoveUpload={removeGeneralUpload}
+            />
+
+            {uploadError && (
+              <p className="mt-3 rounded-lg bg-clay-500/10 px-3 py-2 text-sm text-clay-600">
+                {uploadError}
+              </p>
             )}
           </div>
 
@@ -577,37 +585,49 @@ export function InquiryView({ locale }: { locale: Locale }) {
 }
 
 // =============================================================================
-// InquiryLineItem — one row per saved product. Renders variant chips,
-// note textarea, and attachment upload UI.
+// InquiryLineItem — one row per saved product. Compact card with a 3-dot
+// menu in the top-right (Add attachment / Add edit note / Remove product).
 // =============================================================================
 
 function InquiryLineItem({
   item,
   locale,
+  isUploading,
   onRemove,
   onNoteChange,
-  attachments,
-  onFilesAdded,
-  onRemoveAttachment,
-  onChangeKind,
+  onUploadFiles,
+  onRemoveUpload,
 }: {
   item: InquiryItem;
   locale: Locale;
+  isUploading: boolean;
   onRemove: () => void;
   onNoteChange: (note: string) => void;
-  attachments: LocalAttachment[];
-  onFilesAdded: (files: FileList | File[]) => void;
-  onRemoveAttachment: (localId: string) => void;
-  onChangeKind: (localId: string, kind: UploadKind) => void;
+  onUploadFiles: (files: FileList | File[]) => void;
+  onRemoveUpload: (storagePath: string) => void;
 }) {
   const ui = uiContent[locale].inquiryPage;
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
+  const noteRef = useRef<HTMLTextAreaElement>(null);
+  const [noteOpen, setNoteOpen] = useState((item.note ?? "").length > 0);
 
   const variantChips = buildVariantChips(item, ui.variantLabels);
+  const uploads = item.uploads ?? [];
 
   return (
     <li className="rounded-2xl bg-white p-4 ring-1 ring-ink-100">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept={ACCEPT_ATTR}
+        multiple
+        onChange={(e) => {
+          if (e.target.files) onUploadFiles(e.target.files);
+          if (fileInputRef.current) fileInputRef.current.value = "";
+        }}
+        className="sr-only"
+      />
+
       <div className="flex gap-4">
         <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-sand-100">
           <Image
@@ -626,14 +646,15 @@ function InquiryLineItem({
             >
               {item.name}
             </Link>
-            <button
-              type="button"
-              onClick={onRemove}
-              aria-label={ui.removeAria(item.name)}
-              className="text-xs text-ink-400 hover:text-clay-600"
-            >
-              {ui.remove}
-            </button>
+            <ItemMenu
+              locale={locale}
+              onAddAttachment={() => fileInputRef.current?.click()}
+              onAddNote={() => {
+                setNoteOpen(true);
+                queueMicrotask(() => noteRef.current?.focus());
+              }}
+              onRemove={onRemove}
+            />
           </div>
 
           {variantChips.length > 0 && (
@@ -652,102 +673,243 @@ function InquiryLineItem({
             </div>
           )}
 
-          <textarea
-            defaultValue={item.note ?? ""}
-            onBlur={(e) => onNoteChange(e.target.value)}
-            placeholder={ui.notesPlaceholder}
-            rows={2}
-            className="mt-3 w-full resize-y rounded-lg border-ink-100 bg-sand-50 px-3 py-2 text-sm text-ink-800 placeholder:text-ink-400 focus:border-moss-500 focus:ring-moss-500"
-          />
+          {uploads.length > 0 && (
+            <div className="mt-3">
+              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-500">
+                {ui.uploads.attachedHeading}
+              </div>
+              <ul className="mt-1.5 space-y-1">
+                {uploads.map((u) => (
+                  <UploadRow
+                    key={u.storagePath}
+                    upload={u}
+                    locale={locale}
+                    onRemove={() => onRemoveUpload(u.storagePath)}
+                  />
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {isUploading && (
+            <p className="mt-2 text-xs text-ink-500">{ui.uploads.uploading}</p>
+          )}
+
+          {noteOpen && (
+            <textarea
+              ref={noteRef}
+              defaultValue={item.note ?? ""}
+              onBlur={(e) => onNoteChange(e.target.value)}
+              placeholder={ui.notesPlaceholder}
+              rows={2}
+              className="mt-3 w-full resize-y rounded-lg border-ink-100 bg-sand-50 px-3 py-2 text-sm text-ink-800 placeholder:text-ink-400 focus:border-moss-500 focus:ring-moss-500"
+            />
+          )}
         </div>
       </div>
+    </li>
+  );
+}
 
-      {/* Attachments */}
-      <div className="mt-3 border-t border-ink-100 pt-3">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h3 className="text-sm font-semibold text-ink-900">
-            {ui.uploads.heading}
-          </h3>
-          <span className="text-xs text-ink-400">{ui.uploads.help}</span>
-        </div>
+// =============================================================================
+// ItemMenu — three-dot kebab menu with three actions.
+// =============================================================================
 
-        <label
-          onDragOver={(e) => {
-            e.preventDefault();
-            setIsDragging(true);
-          }}
-          onDragLeave={() => setIsDragging(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setIsDragging(false);
-            if (e.dataTransfer.files.length > 0) onFilesAdded(e.dataTransfer.files);
-          }}
-          className={`mt-2 block cursor-pointer rounded-xl border-2 border-dashed px-4 py-5 text-center text-sm transition ${
-            isDragging
-              ? "border-moss-500 bg-moss-50/40 text-moss-700"
-              : "border-ink-100 bg-sand-50/60 text-ink-500 hover:border-ink-800/30"
-          }`}
+function ItemMenu({
+  locale,
+  onAddAttachment,
+  onAddNote,
+  onRemove,
+}: {
+  locale: Locale;
+  onAddAttachment: () => void;
+  onAddNote: () => void;
+  onRemove: () => void;
+}) {
+  const ui = uiContent[locale].inquiryPage.itemMenu;
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDocClick = (e: MouseEvent) => {
+      if (
+        wrapperRef.current &&
+        !wrapperRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false);
+      }
+    };
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDocClick);
+    document.addEventListener("keydown", onEsc);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keydown", onEsc);
+    };
+  }, [open]);
+
+  const fire = (fn: () => void) => () => {
+    setOpen(false);
+    fn();
+  };
+
+  return (
+    <div ref={wrapperRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={ui.open}
+        className="flex h-8 w-8 items-center justify-center rounded-full text-ink-500 transition hover:bg-sand-100 hover:text-ink-900"
+      >
+        <DotsIcon className="h-5 w-5" aria-hidden />
+      </button>
+      {open && (
+        <ul
+          role="menu"
+          className="absolute right-0 top-9 z-10 min-w-[12rem] overflow-hidden rounded-xl bg-white py-1 text-sm shadow-lg ring-1 ring-ink-100"
         >
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".pdf,.png,.jpg,.jpeg,.svg,.ai,application/pdf,image/png,image/jpeg,image/svg+xml,application/postscript"
-            multiple
-            onChange={(e) => {
-              if (e.target.files) onFilesAdded(e.target.files);
-              if (fileInputRef.current) fileInputRef.current.value = "";
-            }}
-            className="sr-only"
-          />
-          {ui.uploads.dropzone}
-        </label>
+          <MenuItem onClick={fire(onAddAttachment)}>{ui.addAttachment}</MenuItem>
+          <MenuItem onClick={fire(onAddNote)}>{ui.addNote}</MenuItem>
+          <MenuItem onClick={fire(onRemove)} danger>
+            {ui.removeProduct}
+          </MenuItem>
+        </ul>
+      )}
+    </div>
+  );
+}
 
-        {attachments.length > 0 && (
-          <ul className="mt-3 space-y-1.5">
-            {attachments.map((att) => (
-              <li
-                key={att.localId}
-                className={`flex flex-wrap items-center gap-2 rounded-lg px-3 py-2 text-xs ring-1 ${
-                  att.error
-                    ? "bg-clay-500/10 text-clay-600 ring-clay-500/30"
-                    : "bg-sand-50 text-ink-700 ring-ink-100"
-                }`}
-              >
-                <span className="flex-1 min-w-0 truncate font-medium text-ink-900">
-                  {att.file.name}
-                </span>
-                <span className="text-[0.7rem] text-ink-400">
-                  {formatBytes(att.file.size)}
-                </span>
-                <select
-                  aria-label={ui.uploads.kindLabel}
-                  value={att.kind}
-                  onChange={(e) =>
-                    onChangeKind(att.localId, e.target.value as UploadKind)
-                  }
-                  className="rounded-md border-ink-100 bg-white text-xs focus:border-moss-500 focus:ring-moss-500"
-                >
-                  <option value="logo">{ui.uploads.kinds.logo}</option>
-                  <option value="design_brief">{ui.uploads.kinds.design_brief}</option>
-                  <option value="artwork">{ui.uploads.kinds.artwork}</option>
-                  <option value="reference">{ui.uploads.kinds.reference}</option>
-                </select>
-                <button
-                  type="button"
-                  onClick={() => onRemoveAttachment(att.localId)}
-                  aria-label={ui.uploads.removeAria(att.file.name)}
-                  className="text-ink-400 hover:text-clay-600"
-                >
-                  ✕
-                </button>
-                {att.error && (
-                  <span className="basis-full text-[0.7rem]">{att.error}</span>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
+function MenuItem({
+  children,
+  onClick,
+  danger,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  danger?: boolean;
+}) {
+  return (
+    <li role="none">
+      <button
+        type="button"
+        role="menuitem"
+        onClick={onClick}
+        className={`block w-full px-3 py-2 text-left transition hover:bg-sand-100 ${
+          danger ? "text-clay-600 hover:text-clay-700" : "text-ink-800"
+        }`}
+      >
+        {children}
+      </button>
+    </li>
+  );
+}
+
+// =============================================================================
+// GeneralUploads — small "Add general attachment" section for files that
+// apply to the whole inquiry, not a specific product.
+// =============================================================================
+
+function GeneralUploads({
+  locale,
+  uploads,
+  isUploading,
+  onUploadFiles,
+  onRemoveUpload,
+}: {
+  locale: Locale;
+  uploads: StoredUpload[];
+  isUploading: boolean;
+  onUploadFiles: (files: FileList | File[]) => void;
+  onRemoveUpload: (storagePath: string) => void;
+}) {
+  const ui = uiContent[locale].inquiryPage;
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <section className="mt-8 rounded-2xl border border-dashed border-ink-100 bg-white p-4">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept={ACCEPT_ATTR}
+        multiple
+        onChange={(e) => {
+          if (e.target.files) onUploadFiles(e.target.files);
+          if (fileInputRef.current) fileInputRef.current.value = "";
+        }}
+        className="sr-only"
+      />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="text-sm font-semibold text-ink-900">
+            {ui.generalUploads.heading}
+          </h3>
+          <p className="mt-0.5 text-xs text-ink-500">
+            {ui.generalUploads.help}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isUploading}
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-ink-100 bg-white px-3 py-1.5 text-xs font-semibold text-ink-700 transition hover:border-ink-800/40 hover:text-ink-900 disabled:opacity-60"
+        >
+          <PlusIcon className="h-3.5 w-3.5" aria-hidden />
+          {isUploading ? ui.uploads.uploading : ui.generalUploads.addButton}
+        </button>
       </div>
+
+      {uploads.length > 0 ? (
+        <ul className="mt-3 space-y-1">
+          {uploads.map((u) => (
+            <UploadRow
+              key={u.storagePath}
+              upload={u}
+              locale={locale}
+              onRemove={() => onRemoveUpload(u.storagePath)}
+            />
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-3 text-xs text-ink-400">{ui.generalUploads.empty}</p>
+      )}
+    </section>
+  );
+}
+
+function UploadRow({
+  upload,
+  locale,
+  onRemove,
+}: {
+  upload: StoredUpload;
+  locale: Locale;
+  onRemove: () => void;
+}) {
+  const ui = uiContent[locale].inquiryPage.uploads;
+  return (
+    <li className="flex flex-wrap items-center gap-2 rounded-lg bg-sand-50 px-3 py-1.5 text-xs text-ink-700 ring-1 ring-ink-100">
+      <span className="flex-1 min-w-0 truncate font-medium text-ink-900">
+        {upload.originalFilename}
+      </span>
+      <span className="text-[0.7rem] text-ink-400">
+        {formatBytes(upload.sizeBytes)}
+      </span>
+      <span className="rounded-md bg-white px-2 py-0.5 text-[0.7rem] uppercase tracking-wide text-moss-700">
+        {ui.kinds[upload.kind as UploadKind]}
+      </span>
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label={ui.removeAria(upload.originalFilename)}
+        className="text-ink-400 hover:text-clay-600"
+      >
+        ✕
+      </button>
     </li>
   );
 }
@@ -813,6 +975,44 @@ function contactMethodInputConfig(method: ContactMethod): {
     default:
       return { type: "text", inputMode: "text", autoComplete: undefined };
   }
+}
+
+function DotsIcon({
+  className = "",
+  ...rest
+}: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className={className}
+      {...rest}
+    >
+      <circle cx="5" cy="12" r="1.6" />
+      <circle cx="12" cy="12" r="1.6" />
+      <circle cx="19" cy="12" r="1.6" />
+    </svg>
+  );
+}
+
+function PlusIcon({
+  className = "",
+  ...rest
+}: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      {...rest}
+    >
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  );
 }
 
 function WhatsAppIcon({ className = "" }: { className?: string }) {

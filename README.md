@@ -8,7 +8,7 @@ Buyers browse products → configure variants (size / color / material /
 quantity) → add to an inquiry cart → submit an RFQ with optional file
 attachments. The inquiry persists to Supabase, triggers an email to
 sales with fresh download links, and gives the buyer a WhatsApp quick-
-follow-up button. Sales manages inquiries from a magic-link-authed
+follow-up button. Sales manages inquiries from a password-authed
 `/admin` dashboard.
 
 **Stack:** Next.js 15 (App Router) · React 19 · TypeScript · Tailwind
@@ -170,11 +170,13 @@ uploads silently skip.
 
 ## Admin dashboard (`/admin`)
 
-Internal tool for sales. Magic-link auth via Supabase, allowlist-gated
-by the `admin_users` table.
+Internal tool for sales. Email + password auth via Supabase,
+allowlist-gated by the `admin_users` table. (Magic-link is deferred
+until a custom SMTP / verified domain is configured — Supabase's
+built-in email service is too rate-limited for daily sales-team use.)
 
 Surfaces:
-- `/admin/login` — magic-link request form
+- `/admin/login` — email + password sign-in
 - `/admin/inquiries` — paginated list, search (name/company/email/
   request-ID), status filter, sort
 - `/admin/inquiries/[id]` — contact, buyer message, line items with
@@ -182,8 +184,9 @@ Surfaces:
   URL), editable status / assignee / internal notes
 
 Setup: [`docs/PHASE-4-ADMIN.md`](docs/PHASE-4-ADMIN.md). Apply the
-`0003_admin.sql` migration, seed your email in `admin_users`, add the
-callback URL to Supabase's redirect allowlist, sign in.
+`0003_admin.sql` migration, seed your email in `admin_users`,
+provision the auth user (Dashboard or
+`scripts/set-admin-password.mjs`), sign in.
 
 ## Deploying to Vercel
 
@@ -216,7 +219,7 @@ Standard Next.js App Router project — no custom build config.
   escape hatch), tier pricing, quantity stepper, two-CTA product
   flow (Add to Inquiry + Request Quote Now), multi-image gallery,
   customer file uploads with signed-URL sales email.
-- **Phase 4** — `/admin` dashboard (magic-link auth, allowlist,
+- **Phase 4** — `/admin` dashboard (email+password auth, allowlist,
   inquiry list + detail, status/assignee/notes editing, fresh
   signed-URL attachment downloads).
 

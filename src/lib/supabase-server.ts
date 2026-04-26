@@ -44,6 +44,11 @@ export async function createSupabaseServerClient(): Promise<SupabaseClient | nul
  * Convenience wrapper that checks whether the current request's
  * authenticated user's email is in the admin_users allowlist.
  * Returns the admin row or null.
+ *
+ * Uses `ilike` (case-insensitive) on the DB side so a mixed-case
+ * value in admin_users.email matches the lower-cased auth email.
+ * The companion SQL `is_admin()` function does `lower(au.email)`
+ * on both sides — this query mirrors that behavior.
  */
 export async function requireAdminRow(): Promise<{
   email: string;
@@ -59,7 +64,7 @@ export async function requireAdminRow(): Promise<{
   const { data, error } = await supabase
     .from("admin_users")
     .select("email, full_name, role, active")
-    .eq("email", user.email.toLowerCase())
+    .ilike("email", user.email)
     .eq("active", true)
     .maybeSingle();
 

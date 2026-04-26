@@ -6,15 +6,27 @@ import type { Product } from "@/data/types";
 import { uiContent } from "@/content/ui";
 import { localePath, type Locale } from "@/lib/i18n";
 import { useInquiry } from "@/lib/inquiry-context";
+import {
+  ProductUploads,
+  newPendingFileId,
+  validatePendingFile,
+  type PendingFile,
+} from "./ProductUploads";
+import { uploadInquiryFile, type UploadKind } from "@/lib/uploads";
+
+const MAX_PENDING_FILES = 10;
 
 /**
  * Product detail right-column panel — tier pricing, size/color/material
  * pickers (with a "Custom" escape hatch for each), quantity stepper,
- * save-to-inquiry actions.
+ * file uploads, save-to-inquiry actions.
  *
  * All variant state is captured into the inquiry cart on save, flows
  * through to the inquiry review page, the Supabase row, the sales email,
- * and the WhatsApp pre-fill.
+ * and the WhatsApp pre-fill. Pending file uploads are deferred until
+ * the user clicks Add to Inquiry / Request Quote Now — at which point
+ * each file is uploaded to Supabase Storage and its metadata attached
+ * to the cart item.
  */
 export function ProductVariantsPanel({
   product,
@@ -25,7 +37,7 @@ export function ProductVariantsPanel({
 }) {
   const ui = uiContent[locale].productDetail;
   const router = useRouter();
-  const { upsert, hasItem } = useInquiry();
+  const { upsert, hasItem, items, attachUpload, removeUpload } = useInquiry();
   const image = product.images[0];
 
   const minOrderQty = product.minOrderQty ?? 0;
@@ -45,6 +57,12 @@ export function ProductVariantsPanel({
   );
   const [customMaterial, setCustomMaterial] = useState<string>("");
   const [justAdded, setJustAdded] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadFailed, setUploadFailed] = useState(false);
+
+  const existingItem = items.find((i) => i.slug === product.slug);
+  const existingUploads = existingItem?.uploads ?? [];
 
   const activeTier = useMemo(() => {
     if (!product.priceRange) return null;
@@ -67,6 +85,36 @@ export function ProductVariantsPanel({
     const t = setTimeout(() => setJustAdded(false), 2000);
     return () => clearTimeout(t);
   }, [justAdded]);
+
+  const handleAddFiles = (files: FileList | File[]) => {
+    setUploadFailed(false);
+    const remaining = MAX_PENDING_FILES - pendingFiles.length;
+    const accepted: PendingFile[] = [];
+    for (const file of Array.from(files).slice(0, Math.max(0, remaining))) {
+      accepted.push({
+        localId: newPendingFileId(),
+        file,
+        kind: "reference",
+        error: validatePendingFile(file, {
+          tooLarge: ui.uploads.tooLarge,
+          wrongType: ui.uploads.wrongType,
+        }),
+      });
+    }
+    if (accepted.length > 0) {
+      setPendingFiles((prev) => [...prev, ...accepted]);
+    }
+  };
+
+  const removePending = (localId: string) => {
+    setPendingFiles((prev) => prev.filter((p) => p.localId !== localId));
+  };
+
+  const changeKind = (localId: string, kind: UploadKind) => {
+    setPendingFiles((prev) =>
+      prev.map((p) => (p.localId === localId ? { ...p, kind } : p)),
+    );
+  };
 
   const captureSelection = () => {
     const isCustomSize = selectedSize === CUSTOM;
@@ -97,13 +145,52 @@ export function ProductVariantsPanel({
     });
   };
 
-  const handleAdd = () => {
+  /**
+   * Upload all pending files to Supabase Storage and attach the
+   * resulting metadata to this product in the inquiry context.
+   * Files with validation errors are skipped. Returns true if any
+   * upload failed (so the caller can surface a hint).
+   */
+  const flushPendingUploads = async (): Promise<boolean> => {
+    if (pendingFiles.length === 0) return false;
+    setUploading(true);
+    let anyFailed = false;
+    try {
+      for (const pending of pendingFiles) {
+        if (pending.error) {
+          anyFailed = true;
+          continue;
+        }
+        const result = await uploadInquiryFile(pending.file, pending.kind);
+        if (result) {
+          attachUpload(product.slug, {
+            storagePath: result.storagePath,
+            originalFilename: result.originalFilename,
+            mimeType: result.mimeType,
+            sizeBytes: result.sizeBytes,
+            kind: result.kind,
+          });
+        } else {
+          anyFailed = true;
+        }
+      }
+    } finally {
+      setUploading(false);
+    }
+    setPendingFiles([]);
+    setUploadFailed(anyFailed);
+    return anyFailed;
+  };
+
+  const handleAdd = async () => {
     captureSelection();
+    await flushPendingUploads();
     setJustAdded(true);
   };
 
-  const handleRequestQuoteNow = () => {
+  const handleRequestQuoteNow = async () => {
     captureSelection();
+    await flushPendingUploads();
     router.push(localePath(locale, "/inquiry"));
   };
 
@@ -296,17 +383,39 @@ export function ProductVariantsPanel({
         )}
       </section>
 
+      {/* Uploads */}
+      <ProductUploads
+        locale={locale}
+        pendingFiles={pendingFiles}
+        existingUploads={existingUploads}
+        onAddFiles={handleAddFiles}
+        onRemovePending={removePending}
+        onChangeKind={changeKind}
+        onRemoveExisting={(storagePath) =>
+          removeUpload(product.slug, storagePath)
+        }
+      />
+
+      {uploadFailed && (
+        <p className="rounded-lg bg-clay-500/10 px-3 py-2 text-sm text-clay-600">
+          {ui.uploads.uploadFailed}
+        </p>
+      )}
+
       {/* Actions */}
       <div className="flex flex-wrap gap-3 pt-2">
         <button
           type="button"
           onClick={handleAdd}
+          disabled={uploading}
           aria-live="polite"
           className={`btn-primary min-w-[10rem] transition ${
             justAdded ? "bg-moss-800" : ""
           }`}
         >
-          {justAdded
+          {uploading
+            ? ui.cta.uploading
+            : justAdded
             ? ui.cta.addedFeedback
             : alreadyInCart
             ? ui.cta.updateInquiry
@@ -315,9 +424,10 @@ export function ProductVariantsPanel({
         <button
           type="button"
           onClick={handleRequestQuoteNow}
+          disabled={uploading}
           className="btn-secondary"
         >
-          {ui.cta.requestQuoteNow}
+          {uploading ? ui.cta.uploading : ui.cta.requestQuoteNow}
         </button>
       </div>
     </div>

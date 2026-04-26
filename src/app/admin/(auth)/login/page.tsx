@@ -7,7 +7,6 @@ export const metadata = {
 
 type SearchParams = {
   error?: string;
-  sent?: string;
   next?: string;
 };
 
@@ -31,14 +30,13 @@ export default async function AdminLoginPage({
 
           <div className="mt-6 rounded-2xl bg-white p-8 ring-1 ring-ink-100">
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-moss-700">
-              ICOMing · Admin
+              ICOM BAG · Admin
             </div>
             <h1 className="mt-3 font-serif text-2xl font-semibold text-ink-900">
               Sign in to manage inquiries
             </h1>
             <p className="mt-3 text-sm text-ink-600">
-              Enter the email you were added with. We&apos;ll send a one-time
-              sign-in link — no password needed.
+              Enter the email and password you were issued.
             </p>
 
             <LoginForm nextPath={params.next ?? "/admin/inquiries"} />
@@ -48,16 +46,12 @@ export default async function AdminLoginPage({
                 {params.error}
               </p>
             )}
-            {params.sent && (
-              <p className="mt-4 rounded-lg bg-moss-100 px-3 py-2 text-sm text-moss-800">
-                Check your inbox for a sign-in link.
-              </p>
-            )}
           </div>
 
           <p className="mt-6 text-center text-xs text-ink-400">
-            Access is limited to pre-registered sales / admin emails.
-            Contact the site owner if you need to be added.
+            Access is limited to pre-registered sales / admin accounts.
+            Contact the site owner if you&apos;re locked out or need a
+            password reset.
           </p>
         </div>
       </div>

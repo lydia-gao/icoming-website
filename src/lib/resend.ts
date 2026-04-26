@@ -35,5 +35,5 @@ export function getInquiryRecipients(): string[] {
  * default sender; when a real domain is verified, set RESEND_FROM_EMAIL.
  */
 export function getInquiryFromAddress(): string {
-  return process.env.RESEND_FROM_EMAIL ?? "ICOMing RFQ <onboarding@resend.dev>";
+  return process.env.RESEND_FROM_EMAIL ?? "ICOM BAG RFQ <onboarding@resend.dev>";
 }

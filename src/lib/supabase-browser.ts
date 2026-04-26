@@ -1,17 +1,26 @@
 "use client";
 
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
  * Browser Supabase client using the publishable (anon) key.
- * Safe to import from client components. Reads env at first-call time.
+ *
+ * Uses `createBrowserClient` from `@supabase/ssr` (not the plain
+ * `createClient` from supabase-js) so that:
+ *   - Magic-link auth uses PKCE flow.
+ *   - The PKCE code-verifier is stored in a cookie the server callback
+ *     can read during `exchangeCodeForSession`.
+ *   - The session cookies written here are the same cookies the server
+ *     reads via `createServerClient`, so the auth state stays in sync
+ *     across server / client boundaries.
+ *
+ * Returns `null` if env vars are missing so file uploads gracefully
+ * skip in local dev without a configured Supabase project.
  *
  * Accepts either key naming:
  *   - New:    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY  (sb_publishable_...)
  *   - Legacy: NEXT_PUBLIC_SUPABASE_ANON_KEY         (JWT eyJ...)
- *
- * Returns `null` if env vars are missing so file uploads gracefully
- * skip in local dev without a configured Supabase project.
  */
 let cachedClient: SupabaseClient | null | undefined;
 
@@ -28,8 +37,6 @@ export function getBrowserSupabase(): SupabaseClient | null {
     return null;
   }
 
-  cachedClient = createClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  cachedClient = createBrowserClient(url, key);
   return cachedClient;
 }

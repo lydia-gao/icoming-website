@@ -1,5 +1,15 @@
 import { getResend, getInquiryRecipients, getInquiryFromAddress } from "./resend";
 
+export type InquiryEmailUpload = {
+  originalFilename: string;
+  sizeBytes: number;
+  kind?: string;
+  storagePath: string;
+  /** Pre-signed Supabase Storage URL for sales download. Typically
+   *  valid for 7 days from send time. */
+  signedUrl?: string;
+};
+
 export type InquiryEmailItem = {
   slug: string;
   name: string;
@@ -13,15 +23,7 @@ export type InquiryEmailItem = {
   priceSnapshot?: string;
   tierLabel?: string;
   customizationNotes?: string;
-  uploads?: Array<{
-    originalFilename: string;
-    sizeBytes: number;
-    kind?: string;
-    storagePath: string;
-    /** Pre-signed Supabase Storage URL for sales download. Typically
-     *  valid for 7 days from send time. */
-    signedUrl?: string;
-  }>;
+  uploads?: InquiryEmailUpload[];
 };
 
 /** How long signed attachment URLs in the sales email stay valid. */
@@ -38,6 +40,8 @@ export type InquiryEmailData = {
   otherPlatformName?: string;
   message?: string;
   items: InquiryEmailItem[];
+  /** Inquiry-level attachments not tied to a specific product. */
+  generalUploads?: InquiryEmailUpload[];
   createdAt: Date;
   adminUrl?: string;
 };
@@ -80,7 +84,7 @@ function buildSubject(d: InquiryEmailData): string {
   const n = d.items.length;
   const label = d.company ? d.company : d.name;
   const plural = n === 1 ? "item" : "items";
-  return `[ICOMing RFQ] ${d.requestId} — ${label} (${n} ${plural})`;
+  return `[ICOM BAG RFQ] ${d.requestId} — ${label} (${n} ${plural})`;
 }
 
 function itemVariantLine(item: InquiryEmailItem): string {
@@ -144,12 +148,23 @@ function buildTextBody(d: InquiryEmailData): string {
       }
     });
   }
+  if (d.generalUploads && d.generalUploads.length > 0) {
+    lines.push("");
+    lines.push("GENERAL ATTACHMENTS (whole inquiry)");
+    d.generalUploads.forEach((u) => {
+      const size = formatSize(u.sizeBytes);
+      lines.push(`  - ${u.originalFilename} (${u.kind ?? "file"}, ${size})`);
+      if (u.signedUrl) {
+        lines.push(`    Download: ${u.signedUrl}`);
+      }
+    });
+  }
   if (d.message) {
     lines.push("");
     lines.push("MESSAGE");
     lines.push(d.message);
   }
-  if (hasAnyAttachments(d.items)) {
+  if (hasAnyAttachments(d)) {
     lines.push("");
     lines.push(`Note: attachment download links valid for 7 days from send time.`);
   }
@@ -160,8 +175,9 @@ function buildTextBody(d: InquiryEmailData): string {
   return lines.join("\n");
 }
 
-function hasAnyAttachments(items: InquiryEmailItem[]): boolean {
-  return items.some((i) => (i.uploads?.length ?? 0) > 0);
+function hasAnyAttachments(d: InquiryEmailData): boolean {
+  if (d.items.some((i) => (i.uploads?.length ?? 0) > 0)) return true;
+  return (d.generalUploads?.length ?? 0) > 0;
 }
 
 function buildHtmlBody(d: InquiryEmailData): string {
@@ -232,6 +248,23 @@ function buildHtmlBody(d: InquiryEmailData): string {
     rows.push(`</ol>`);
   }
 
+  if (d.generalUploads && d.generalUploads.length > 0) {
+    rows.push(
+      `<h3 style="margin:20px 0 4px">General attachments <span style="color:#888;font-weight:normal">(whole inquiry)</span></h3>`,
+    );
+    rows.push(`<ul style="padding-left:18px;font-size:14px;margin:2px 0">`);
+    for (const u of d.generalUploads) {
+      const size = formatSize(u.sizeBytes);
+      const filenameCell = u.signedUrl
+        ? `<a href="${escapeAttr(u.signedUrl)}" style="color:#3d5534;text-decoration:underline">${escape(u.originalFilename)}</a>`
+        : escape(u.originalFilename);
+      rows.push(
+        `<li>${filenameCell} <span style="color:#888">(${escape(u.kind ?? "file")}, ${escape(size)})</span></li>`,
+      );
+    }
+    rows.push(`</ul>`);
+  }
+
   if (d.message) {
     rows.push(`<h3 style="margin:20px 0 4px">Message</h3>`);
     rows.push(
@@ -239,7 +272,7 @@ function buildHtmlBody(d: InquiryEmailData): string {
     );
   }
 
-  if (hasAnyAttachments(d.items)) {
+  if (hasAnyAttachments(d)) {
     rows.push(
       `<p style="margin:16px 0 0;color:#888;font-size:12px;font-style:italic">Attachment download links valid for 7 days from send time.</p>`,
     );

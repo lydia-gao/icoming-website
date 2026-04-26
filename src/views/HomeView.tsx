@@ -3,12 +3,10 @@ import { CategoryCard } from "@/components/CategoryCard";
 import { ProductCard } from "@/components/ProductCard";
 import { Marquee } from "@/components/Marquee";
 import { EditorialDuo } from "@/components/EditorialDuo";
-import { CertStrip } from "@/components/CertStrip";
 import { Placeholder } from "@/components/Placeholder";
 import { getLocalizedCategories } from "@/data/categories";
 import { getFeaturedProducts } from "@/data/products";
 import { homeContent, marqueeTiles } from "@/content/home";
-import { trustContent } from "@/content/trust";
 import { uiContent } from "@/content/ui";
 import { isPlaceholder } from "@/content/_types";
 import { localePath, type Locale } from "@/lib/i18n";
@@ -160,15 +158,6 @@ export function HomeView({ locale }: { locale: Locale }) {
           </ol>
         </div>
       </section>
-
-      {/* TRUST / CERTIFICATIONS */}
-      <CertStrip
-        eyebrow={sections.trust.eyebrow}
-        heading={sections.trust.heading}
-        body={sections.trust.body}
-        credentials={trustContent[locale].credentials}
-        locale={locale}
-      />
 
       {/* FINAL CTA */}
       <section className="py-16 sm:py-24">

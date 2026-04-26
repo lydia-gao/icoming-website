@@ -83,25 +83,44 @@ Real trade-show photos are already in `public/images/events/` (4 booth photos).
 ## 6. Better factory photography (high-value upgrade)
 
 Current imagery is strong on product shots but **missing real factory/team
-content**. This is the single biggest upgrade for trust-building.
+content**. This is the single biggest upgrade for trust-building. Two
+specific About-page slots ("Inside the factory" and "Office & team") render
+as `placeholder` cards until photos arrive.
 
 Ideally a small photoshoot (half a day with any competent local photographer)
 covering:
+
+**Inside the factory** → save into `public/images/factory/`, list under
+`aboutContent.events.gallery.factory.photos` in `src/content/about.ts`:
 
 - [ ] Production floor — sewing machines in use, workers at stations (respecting privacy)
 - [ ] Cutting tables and fabric rolls
 - [ ] QC/inspection station
 - [ ] Printing area (screen-print / DTG)
 - [ ] Finished-goods packing area
-- [ ] Exterior of the factory building with ICOMing signage
-- [ ] One wide "group photo" of the sales team
-- [ ] Optional: a short 30–60s factory walkthrough video
+- [ ] Exterior of the factory building with ICOM BAG signage
+
+**Office & team** → save into `public/images/team/`, list under
+`aboutContent.events.gallery.team.photos`:
+
+- [ ] Sales-team workspace
+- [ ] Sample / showroom room
+- [ ] One wide "group photo" of the sales team (if comfortable)
+
+**Customization technique cards (Capabilities page)** → save into
+`public/images/customization/`, set the `image` field on the relevant
+items in `src/content/capabilities.ts → customization.groups[].items[]`:
+
+- [ ] Printing methods — close-ups of screen print, embroidery, foil, debossing on real product
+- [ ] Pantone color matching — color-card next to dyed fabric swatches
+- [ ] Handles — close-ups of cotton webbing, jute, PU, wood/bamboo, rope, self-fabric
+- [ ] Pockets — interior + exterior pocket detail shots
+- [ ] Additional features — gusset, magnetic snap, hangtag, drawcord stopper close-ups
+
+- [ ] Optional: a short 30–60s factory walkthrough video.
 
 Each image: high resolution (2000px+ on long edge), natural daylight where
 possible, no posed marketing smiles — working shots feel more authentic.
-
-Save these into `public/images/factory/` — the design has space reserved for
-them on the About and Capabilities pages.
 
 ## 7. Product-level details (when you're ready to scale past the 9 samples)
 

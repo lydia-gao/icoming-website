@@ -94,8 +94,11 @@ production settings should be locked down before real RFQ data lands.
 - [ ] Turn on **Point-in-Time Recovery** (paid tier) once RFQ volume
       justifies it, or at minimum schedule daily logical backups.
 - [ ] Review **Authentication → Email templates** — once the Resend
-      sending domain is verified, update the magic-link template to
-      come from your domain rather than Supabase's default sender.
+      sending domain is verified, customise templates to come from
+      your domain. At that point, also revisit enabling magic-link
+      and password-recovery flows for the admin login (deferred from
+      V1 because Supabase's default email service is too rate-limited
+      for daily sales-team use).
 - [ ] Confirm the `inquiry-uploads` storage bucket is present in the
       production project (run `0002_storage_bucket.sql` there too).
 - [ ] Replace the `LYDIA_EMAIL_TODO@example.com` placeholder row in

@@ -13,8 +13,8 @@ export const companyWhatsappNumber: string = company.contact.whatsapp;
 /** Generic pre-fill used by the persistent header/floating CTA. */
 export function genericWhatsappMessage(locale: Locale): string {
   return locale === "zh"
-    ? "您好,我通过 ICOMing 官网找到你们。"
-    : "Hi, I found you on the ICOMing website.";
+    ? "您好,我通过爱康官网找到你们。"
+    : "Hi, I found you on the ICOM BAG website.";
 }
 
 export type WhatsAppProduct = {
@@ -55,7 +55,7 @@ export function inquiryWhatsappMessage(
 
   if (isZh) {
     return [
-      "您好,我通过 ICOMing 官网提交了询盘。",
+      "您好,我通过爱康官网提交了询盘。",
       "",
       `请求编号: ${data.requestId}`,
       `姓名: ${data.name}`,
@@ -72,7 +72,7 @@ export function inquiryWhatsappMessage(
   }
 
   return [
-    "Hi, I submitted an inquiry on the ICOMing website.",
+    "Hi, I submitted an inquiry on the ICOM BAG website.",
     "",
     `Request ID: ${data.requestId}`,
     `Name: ${data.name}`,

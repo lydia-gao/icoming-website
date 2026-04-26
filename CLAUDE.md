@@ -21,7 +21,8 @@ Next.js 15 App Router · React 19 · TypeScript · Tailwind CSS ·
 Supabase (Postgres + Auth + Storage) · Resend · Vercel.
 
 No CMS. No separate backend. No ORM — plain `@supabase/supabase-js`.
-Auth is Supabase magic-link.
+Auth is Supabase email + password (V1; magic-link deferred until
+custom SMTP is configured).
 
 ## Phases delivered
 
@@ -33,10 +34,11 @@ Auth is Supabase magic-link.
    quantity stepper, two-CTA flow, multi-image gallery, file uploads
    direct to Supabase Storage with signed download URLs in the sales
    email.
-3. **Phase 4** — `/admin` dashboard: magic-link auth, `admin_users`
-   allowlist, inquiry list with search/filter/sort/pagination,
-   inquiry detail with editable status/assignee/internal-notes and
-   fresh 1-hour signed download URLs.
+3. **Phase 4** — `/admin` dashboard: email+password auth (originally
+   shipped as magic-link; switched in V1 due to email rate limits),
+   `admin_users` allowlist, inquiry list with search/filter/sort/
+   pagination, inquiry detail with editable status/assignee/internal-
+   notes and fresh 1-hour signed download URLs.
 
 ## Not done (don't build unprompted)
 
@@ -79,9 +81,10 @@ complete.
 **Supabase clients** — three flavours, match them to context:
 - `src/lib/supabase.ts` → **service-role** client. Server-only. RLS
   bypass. Used by API routes.
-- `src/lib/supabase-browser.ts` → **publishable** client. Client
-  components. For direct browser → Storage uploads and magic-link
-  OTP calls. Subject to RLS.
+- `src/lib/supabase-browser.ts` → **publishable** client built via
+  `createBrowserClient` from `@supabase/ssr`. Client components.
+  For direct browser → Storage uploads and `signInWithPassword`
+  calls. Subject to RLS.
 - `src/lib/supabase-server.ts` → **cookies-aware server** client for
   server components / route handlers that need the *authenticated
   user's* session. Exports `requireAdminRow()` helper.
@@ -91,13 +94,35 @@ models: prefer `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` /
 `SUPABASE_SECRET_KEY`; falls back to `NEXT_PUBLIC_SUPABASE_ANON_KEY` /
 `SUPABASE_SERVICE_ROLE_KEY`. Docs lead with the new names.
 
-**Admin auth.** Magic-link only. `admin_users` is the source of
-truth. `is_admin()` Postgres fn checks `auth.jwt() ->> 'email'`
-against the allowlist. Pattern in admin routes:
+**Admin auth.** Email + password (Supabase `signInWithPassword`).
+Magic-link was scoped out for V1 because Supabase's built-in email
+service has tight per-project rate limits that break a small
+sales-team workflow; revisit once a custom SMTP / verified domain is
+configured. `admin_users` is the source of truth for who can sign
+in. `is_admin()` Postgres fn checks `auth.jwt() ->> 'email'` against
+the allowlist (case-insensitive via `lower()`). Server-side pattern:
 ```ts
 const admin = await requireAdminRow();
 if (!admin) redirect("/admin/login"); // or return 401 in API
 ```
+`requireAdminRow()` uses `ilike` so it tolerates mixed-case rows in
+`admin_users.email`. The browser client is `createBrowserClient`
+from `@supabase/ssr` (PKCE + cookie storage) so future password-
+recovery / email-confirmation flows that go through `/auth/callback`
+work end-to-end.
+
+**Admin onboarding & password reset.** No user-facing "forgot
+password" flow exists in V1 — recovery would otherwise hit the same
+rate-limited email service we're avoiding. Lydia provisions accounts
+and resets passwords offline:
+- **Create user**: Supabase Dashboard → Authentication → Users → Add
+  user → "Create new user" (instant, no email sent). Then add the
+  email to `public.admin_users` with `active = true`.
+- **Reset password without email**: run
+  `node --env-file=.env.local scripts/set-admin-password.mjs <email> [newpass]`.
+  Generates a random password if `[newpass]` is omitted; creates the
+  auth user if they don't yet exist (auto-confirmed). Uses
+  `SUPABASE_SECRET_KEY` — dev machine only.
 
 **API routes.** `/api/inquiry` accepts public JSON payloads from
 the browser — validates name+email, inserts inquiry+items+uploads,
@@ -203,8 +228,11 @@ at various points in dev; structure new work accordingly.
    `0002`, `0003` have already been applied there. No SQL to run on
    a fresh clone, just point env vars at the same project.
 5. `npm run dev`, visit `http://localhost:3000`.
-6. For admin: `/admin` → enter an email that's in `admin_users` →
-   check inbox → click magic link.
+6. For admin: provision an auth user (Dashboard → Authentication →
+   Users → Add user, or `node --env-file=.env.local
+   scripts/set-admin-password.mjs <email> <password>`), ensure the
+   email is in `admin_users` with `active = true`, then visit
+   `/admin` and sign in.
 
 Full first-time setup (if the Supabase project is being recreated
 from scratch) lives in [`docs/PHASE-1-SETUP.md`](docs/PHASE-1-SETUP.md)

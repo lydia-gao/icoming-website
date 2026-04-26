@@ -1,5 +1,5 @@
 import type { Locale } from "@/lib/i18n";
-import { placeholder, type Metric } from "./_types";
+import type { Metric } from "./_types";
 
 /**
  * HOME PAGE CONTENT — bilingual
@@ -23,12 +23,9 @@ const en = {
 
   heroMetrics: [
     { label: "Founded", value: "2006" },
-    { label: "Factory floor", value: "2,000 m²" },
-    { label: "Team", value: "~30 people" },
-    placeholder(
-      "Export regions",
-      "Confirm the regions/countries you currently ship to, e.g. 'N. America, EU, AU, SE Asia'.",
-    ),
+    { label: "Factory floor", value: "3,000 m²" },
+    { label: "Team", value: "~60 people" },
+    { label: "Export regions", value: "Worldwide" },
   ] satisfies Metric[],
 
   sections: {
@@ -72,13 +69,6 @@ const en = {
       ],
     },
 
-    trust: {
-      eyebrow: "Credentials",
-      heading: "Verified supplier credentials.",
-      body:
-        "We're an assessed supplier on Alibaba via SGS. Full certification documents available on request.",
-    },
-
     finalCta: {
       heading: "Ready to source your next bag line?",
       body:
@@ -101,12 +91,9 @@ const zh: typeof en = {
 
   heroMetrics: [
     { label: "成立年份", value: "2006" },
-    { label: "厂房面积", value: "2,000 m²" },
-    { label: "团队规模", value: "约 30 人" },
-    placeholder(
-      "出口区域",
-      "请确认目前出货的国家/地区,例如 '北美、欧盟、澳洲、东南亚'。",
-    ),
+    { label: "厂房面积", value: "3,000 m²" },
+    { label: "团队规模", value: "约 60 人" },
+    { label: "出口区域", value: "全球" },
   ] satisfies Metric[],
 
   sections: {
@@ -148,13 +135,6 @@ const zh: typeof en = {
         { step: "03", title: "确认与生产", body: "确认稿件、材料及规格书后进入量产。" },
         { step: "04", title: "品控与发货", body: "装柜前最终检验;支持 FOB、EXW 及 CIF 贸易条款。" },
       ],
-    },
-
-    trust: {
-      eyebrow: "资质",
-      heading: "经核验的供应商资质。",
-      body:
-        "我们通过 SGS 阿里巴巴实地认证。完整证书资料可根据需求提供。",
     },
 
     finalCta: {

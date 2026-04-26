@@ -131,6 +131,23 @@ const en = {
       updateInquiry: "Update Inquiry",
       requestQuoteNow: "Request Quote Now",
       addedFeedback: "Added ✓",
+      uploading: "Uploading…",
+    },
+    uploads: {
+      heading: "Reference files for this product",
+      help: "Logos, design briefs, artwork, reference images. PDF, PNG, JPG, SVG, AI up to 20 MB each. Files upload when you click Add to Inquiry.",
+      addButton: "Add files",
+      kindLabel: "Type",
+      kinds: {
+        logo: "Logo",
+        design_brief: "Design brief",
+        artwork: "Artwork",
+        reference: "Reference image",
+      },
+      removeAria: (name: string) => `Remove ${name}`,
+      tooLarge: (name: string) => `${name} exceeds the 20 MB limit.`,
+      wrongType: (name: string) => `${name} — file type not accepted.`,
+      uploadFailed: "Some files failed to upload — your inquiry was saved without them.",
     },
   },
 
@@ -164,9 +181,9 @@ const en = {
       custom: "custom",
     },
     uploads: {
-      heading: "Attachments",
-      help: "Logos, design briefs, artwork, reference images. PDF, PNG, JPG, SVG, AI up to 20 MB each.",
-      dropzone: "Drag & drop files here, or click to browse",
+      attachedHeading: "Attached files",
+      attachedCount: (n: number) =>
+        n === 1 ? "1 file attached" : `${n} files attached`,
       kindLabel: "Type",
       kinds: {
         logo: "Logo",
@@ -177,8 +194,21 @@ const en = {
       removeAria: (name: string) => `Remove ${name}`,
       tooLarge: (name: string) => `${name} exceeds the 20 MB limit.`,
       wrongType: (name: string) => `${name} — file type not accepted.`,
-      uploading: "Uploading attachments…",
-      uploadFailed: "Some attachments failed to upload. The inquiry was saved without them — sales can follow up.",
+      uploading: "Uploading…",
+      uploadFailed:
+        "Some files failed to upload. The inquiry was saved without them — sales can follow up.",
+    },
+    itemMenu: {
+      open: "More actions",
+      addAttachment: "Add attachment",
+      addNote: "Add / edit note",
+      removeProduct: "Remove product",
+    },
+    generalUploads: {
+      heading: "General order references",
+      help: "Files that apply to the whole inquiry, not a specific product.",
+      addButton: "Add general attachment",
+      empty: "No general attachments yet.",
     },
     yourDetails: "Your details",
     yourDetailsNote: "We'll reply within one business day.",
@@ -242,7 +272,7 @@ const en = {
   },
 
   metadata: {
-    siteTitleSuffix: "ICOMing",
+    siteTitleSuffix: "ICOM BAG",
     defaultTitle: "Eco-friendly Bag Manufacturer",
     aboutTitle: "About",
     aboutDescription: (legalName: string, year: number) =>
@@ -375,6 +405,23 @@ const zh: typeof en = {
       updateInquiry: "更新询盘",
       requestQuoteNow: "立即询价",
       addedFeedback: "已加入 ✓",
+      uploading: "上传中…",
+    },
+    uploads: {
+      heading: "本产品的参考文件",
+      help: "Logo、设计稿、印刷文件、参考图。支持 PDF、PNG、JPG、SVG、AI,单个最大 20 MB。点击「加入询盘」时一并上传。",
+      addButton: "添加文件",
+      kindLabel: "类型",
+      kinds: {
+        logo: "Logo",
+        design_brief: "设计稿",
+        artwork: "印刷文件",
+        reference: "参考图",
+      },
+      removeAria: (name: string) => `移除 ${name}`,
+      tooLarge: (name: string) => `${name} 超出 20 MB 限制。`,
+      wrongType: (name: string) => `${name} — 不支持的文件类型。`,
+      uploadFailed: "部分文件上传失败,询盘已提交但不含这些附件。",
     },
   },
 
@@ -408,9 +455,8 @@ const zh: typeof en = {
       custom: "定制",
     },
     uploads: {
-      heading: "附件",
-      help: "Logo、设计稿、印刷文件、参考图。支持 PDF、PNG、JPG、SVG、AI,单个文件最大 20 MB。",
-      dropzone: "拖拽文件到此处,或点击选择文件",
+      attachedHeading: "已附文件",
+      attachedCount: (n: number) => `已附 ${n} 个文件`,
       kindLabel: "类型",
       kinds: {
         logo: "Logo",
@@ -421,8 +467,20 @@ const zh: typeof en = {
       removeAria: (name: string) => `移除 ${name}`,
       tooLarge: (name: string) => `${name} 超出 20 MB 限制。`,
       wrongType: (name: string) => `${name} — 不支持的文件类型。`,
-      uploading: "正在上传附件…",
-      uploadFailed: "部分附件上传失败。询盘已提交,销售将与您确认附件。",
+      uploading: "上传中…",
+      uploadFailed: "部分文件上传失败,询盘已提交但不含这些附件。",
+    },
+    itemMenu: {
+      open: "更多操作",
+      addAttachment: "添加附件",
+      addNote: "添加 / 编辑备注",
+      removeProduct: "移除产品",
+    },
+    generalUploads: {
+      heading: "整单参考文件",
+      help: "适用于整个询盘的文件,而非针对某个产品。",
+      addButton: "添加整单附件",
+      empty: "尚未添加整单附件。",
     },
     yourDetails: "联系方式",
     yourDetailsNote: "我们将在一个工作日内回复。",

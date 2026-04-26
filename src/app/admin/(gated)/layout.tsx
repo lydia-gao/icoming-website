@@ -4,8 +4,8 @@ import { requireAdminRow } from "@/lib/supabase-server";
 
 export const metadata = {
   title: {
-    default: "ICOMing Admin",
-    template: "%s · ICOMing Admin",
+    default: "ICOM BAG Admin",
+    template: "%s · ICOM BAG Admin",
   },
 };
 
@@ -28,7 +28,7 @@ export default async function AdminGatedLayout({
               href="/admin/inquiries"
               className="font-serif text-lg font-semibold"
             >
-              ICOMing <span className="text-moss-700">Admin</span>
+              ICOM BAG <span className="text-moss-700">Admin</span>
             </Link>
             <nav className="hidden items-center gap-1 text-sm sm:flex">
               <Link

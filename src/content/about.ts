@@ -17,7 +17,7 @@ const en = {
     heading: "From trader to trusted manufacturer.",
     paragraphs: [
       "We started out as a pure foreign-trade company, sourcing bags for overseas clients. After years of factory visits, sampling runs, and cost negotiations, our clients pushed us to set up our own production so quality could be locked in at the source.",
-      "The factory is located in Pingyang County; the business department is in Wenzhou City. We run a 2,000 m² production floor with roughly 30 workers and dedicated business teams for overseas accounts.",
+      "The factory is located in Pingyang County; the business department is in Wenzhou City. We run a 3,000 m² production floor with roughly 60 workers and dedicated business teams for overseas accounts.",
       "Most of our customers find us through industry sourcing platforms — and stay with us for years because they can talk to the same people who run the factory floor.",
     ],
   },
@@ -66,13 +66,43 @@ const en = {
     ],
   },
 
+  factoryStrength: {
+    eyebrow: "Factory strength",
+    heading: "Verified capabilities and credentials.",
+    body:
+      "Independently assessed on Alibaba via SGS. Full certification documents available on request.",
+  },
+
   events: {
     eyebrow: "Events & trade shows",
     heading: "Meet us in person.",
-    body: placeholder(
-      "Trade-show history",
-      "List which trade shows you attend (HK Printing & Packaging Fair, Canton Fair, etc.) and the most recent ones, with dates. Trade-show photos are already available in /public/images/events/.",
-    ),
+    intro:
+      "We attend industry shows across the year and welcome customers at our Pingyang facility. A few recent moments below.",
+    gallery: {
+      tradeshows: {
+        title: "Trade shows",
+        photos: [
+          { src: "/images/events/tradeshow-1.jpg", caption: "Booth — buyers walkthrough" },
+          { src: "/images/events/tradeshow-2.jpg", caption: "Sample wall" },
+          { src: "/images/events/tradeshow-3.jpg", caption: "Catalog handover" },
+          { src: "/images/events/tradeshow-4.jpg", caption: "Booth — full view" },
+        ],
+      },
+      factory: {
+        title: "Inside the factory",
+        photos: placeholder(
+          "Factory walkthrough photos",
+          "Add 4-6 production-floor shots: sewing stations, cutting tables, fabric rolls, QC, packing area. Save into /public/images/factory/ and list them here.",
+        ),
+      },
+      team: {
+        title: "Office & team",
+        photos: placeholder(
+          "Office / team photos",
+          "Add 2-4 office shots: sales-team workspace, sample room, group portrait if comfortable. Save into /public/images/team/ and list them here.",
+        ),
+      },
+    },
   },
 
   cta: {
@@ -95,7 +125,7 @@ const zh: typeof en = {
     heading: "从外贸商到值得信赖的制造商。",
     paragraphs: [
       "我们最初是一家纯外贸公司,为海外客户采购各类箱包。经过多年的工厂走访、打样和成本谈判,客户鼓励我们建立自己的生产基地,将品质从源头锁定。",
-      "工厂位于平阳县,业务部门设在温州市。拥有 2,000 m² 的生产车间和约 30 名工人,并设有专门服务海外客户的业务团队。",
+      "工厂位于平阳县,业务部门设在温州市。拥有 3,000 m² 的生产车间和约 60 名工人,并设有专门服务海外客户的业务团队。",
       "多数客户是通过行业采购平台找到我们的——他们之所以长期合作,是因为随时都可以直接与车间负责人沟通。",
     ],
   },
@@ -144,13 +174,43 @@ const zh: typeof en = {
     ],
   },
 
+  factoryStrength: {
+    eyebrow: "工厂实力",
+    heading: "经核验的产能与资质。",
+    body:
+      "通过 SGS 阿里巴巴实地认证。完整证书资料可根据需求提供。",
+  },
+
   events: {
     eyebrow: "展会与活动",
     heading: "期待与您面对面。",
-    body: placeholder(
-      "参展记录",
-      "列出常规参展的展会名称(香港印刷包装展、广交会等)及最近参加的展会和日期。参展照片可在 /public/images/events/ 查看。",
-    ),
+    intro:
+      "我们全年参加多场行业展会,也欢迎客户来平阳工厂参观。以下是近期的一些瞬间。",
+    gallery: {
+      tradeshows: {
+        title: "展会现场",
+        photos: [
+          { src: "/images/events/tradeshow-1.jpg", caption: "展位 — 客户洽谈" },
+          { src: "/images/events/tradeshow-2.jpg", caption: "样品墙" },
+          { src: "/images/events/tradeshow-3.jpg", caption: "目录交接" },
+          { src: "/images/events/tradeshow-4.jpg", caption: "展位全景" },
+        ],
+      },
+      factory: {
+        title: "工厂内部",
+        photos: placeholder(
+          "工厂走访照片",
+          "请提供 4-6 张生产现场照片:车缝工位、裁剪台、面料卷、品检、打包区。保存至 /public/images/factory/,并在此处列出。",
+        ),
+      },
+      team: {
+        title: "办公室与团队",
+        photos: placeholder(
+          "办公室 / 团队照片",
+          "请提供 2-4 张办公室照片:销售团队工位、打样间、合影(如方便)。保存至 /public/images/team/,并在此处列出。",
+        ),
+      },
+    },
   },
 
   cta: {

@@ -16,7 +16,7 @@ type Variant = "header" | "floating";
  * - "floating": fixed bottom-right bubble on mobile (hidden on md+).
  *
  * Both use the generic pre-filled message ("Hi, I found you on the
- * ICOMing website.") — the inquiry success page renders its own richer
+ * ICOM BAG website.") — the inquiry success page renders its own richer
  * WhatsApp button with the request ID + saved products pre-filled.
  */
 export function WhatsAppButton({ variant }: { variant: Variant }) {

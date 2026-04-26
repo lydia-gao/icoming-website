@@ -5,12 +5,13 @@ import { getBrowserSupabase } from "@/lib/supabase-browser";
 
 export function LoginForm({ nextPath }: { nextPath: string }) {
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [password, setPassword] = useState("");
+  const [status, setStatus] = useState<"idle" | "submitting" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setStatus("sending");
+    setStatus("submitting");
     setErrorMessage(null);
 
     const supabase = getBrowserSupabase();
@@ -22,22 +23,25 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
       return;
     }
 
-    const redirect = `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`;
-    const { error } = await supabase.auth.signInWithOtp({
+    const { error } = await supabase.auth.signInWithPassword({
       email: email.trim().toLowerCase(),
-      options: {
-        emailRedirectTo: redirect,
-        // Only allowlisted users can sign in — prevent rogue sign-ups.
-        shouldCreateUser: true,
-      },
+      password,
     });
 
     if (error) {
       setStatus("error");
-      setErrorMessage(error.message);
+      setErrorMessage(
+        error.message === "Invalid login credentials"
+          ? "Email or password is incorrect."
+          : error.message,
+      );
       return;
     }
-    setStatus("sent");
+
+    // Full-document navigation so the server-rendered admin layout
+    // re-runs with the new session cookies (a client-side router push
+    // would keep stale RSC payloads from before login).
+    window.location.assign(nextPath);
   }
 
   return (
@@ -56,16 +60,25 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
         />
       </label>
 
+      <label className="block text-sm">
+        <span className="font-medium text-ink-800">Password</span>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          autoComplete="current-password"
+          minLength={8}
+          className="mt-1 block w-full rounded-lg border-ink-100 bg-sand-50 text-sm focus:border-moss-500 focus:ring-moss-500"
+        />
+      </label>
+
       <button
         type="submit"
-        disabled={status === "sending" || status === "sent"}
+        disabled={status === "submitting"}
         className="btn-primary w-full"
       >
-        {status === "sending"
-          ? "Sending…"
-          : status === "sent"
-          ? "Link sent — check your inbox"
-          : "Send sign-in link"}
+        {status === "submitting" ? "Signing in…" : "Sign in"}
       </button>
 
       {status === "error" && errorMessage && (

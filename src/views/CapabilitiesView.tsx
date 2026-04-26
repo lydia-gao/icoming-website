@@ -2,11 +2,12 @@ import Link from "next/link";
 import { capabilitiesContent } from "@/content/capabilities";
 import { uiContent } from "@/content/ui";
 import { Placeholder } from "@/components/Placeholder";
+import { CustomizationGroup } from "@/components/CustomizationGroup";
 import { isPlaceholder } from "@/content/_types";
 import { localePath, type Locale } from "@/lib/i18n";
 
 export function CapabilitiesView({ locale }: { locale: Locale }) {
-  const { hero, materials, printing, moq, leadTime, qc, compliance, cta } =
+  const { hero, materials, customization, moq, leadTime, qc, compliance, cta } =
     capabilitiesContent[locale];
   const placeholderLabel = uiContent[locale].placeholder.toBeProvided;
   const resolveHref = (href: string) => localePath(locale, href);
@@ -41,17 +42,21 @@ export function CapabilitiesView({ locale }: { locale: Locale }) {
         </div>
       </section>
 
-      {/* Printing */}
+      {/* Customization */}
       <section className="bg-sand-100/60 py-16 md:py-20">
         <div className="container-content">
-          <div className="eyebrow">{printing.eyebrow}</div>
-          <h2 className="section-heading mt-2">{printing.heading}</h2>
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {printing.items.map((p) => (
-              <div key={p.name} className="rounded-2xl bg-white p-5 ring-1 ring-ink-100">
-                <div className="font-semibold text-ink-900">{p.name}</div>
-                <div className="mt-1 text-sm text-ink-600">{p.note}</div>
-              </div>
+          <div className="max-w-2xl">
+            <div className="eyebrow">{customization.eyebrow}</div>
+            <h2 className="section-heading mt-2">{customization.heading}</h2>
+            <p className="mt-3 text-ink-600">{customization.body}</p>
+          </div>
+          <div className="mt-12">
+            {customization.groups.map((group) => (
+              <CustomizationGroup
+                key={group.title}
+                title={group.title}
+                items={group.items}
+              />
             ))}
           </div>
         </div>

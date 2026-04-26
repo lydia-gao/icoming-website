@@ -1,11 +1,15 @@
+import Image from "next/image";
 import Link from "next/link";
 import { aboutContent } from "@/content/about";
+import { trustContent } from "@/content/trust";
 import { isPlaceholder } from "@/content/_types";
 import { Placeholder } from "@/components/Placeholder";
+import { CertStrip } from "@/components/CertStrip";
 import { localePath, type Locale } from "@/lib/i18n";
 
 export function AboutView({ locale }: { locale: Locale }) {
-  const { hero, story, timeline, values, events, cta } = aboutContent[locale];
+  const { hero, story, timeline, values, factoryStrength, events, cta } =
+    aboutContent[locale];
   const resolveHref = (href: string) => localePath(locale, href);
 
   return (
@@ -77,18 +81,83 @@ export function AboutView({ locale }: { locale: Locale }) {
         </div>
       </section>
 
+      {/* FACTORY STRENGTH — certifications + supplier credentials */}
+      <CertStrip
+        eyebrow={factoryStrength.eyebrow}
+        heading={factoryStrength.heading}
+        body={factoryStrength.body}
+        credentials={trustContent[locale].credentials}
+        locale={locale}
+      />
+
       <section className="py-16 md:py-20">
         <div className="container-content">
           <div className="max-w-2xl">
             <div className="eyebrow">{events.eyebrow}</div>
             <h2 className="section-heading mt-2">{events.heading}</h2>
+            <p className="mt-3 text-ink-600">{events.intro}</p>
           </div>
-          <div className="mt-8 max-w-2xl">
-            {isPlaceholder(events.body) ? (
-              <Placeholder placeholder={events.body} locale={locale} />
-            ) : (
-              <p className="text-ink-600">{events.body}</p>
-            )}
+
+          {/* Trade shows */}
+          <div className="mt-12">
+            <h3 className="font-serif text-xl font-semibold text-ink-900 sm:text-2xl">
+              {events.gallery.tradeshows.title}
+            </h3>
+            <ul className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {events.gallery.tradeshows.photos.map((photo) => (
+                <li
+                  key={photo.src}
+                  className="overflow-hidden rounded-2xl bg-white ring-1 ring-ink-100"
+                >
+                  <div className="relative aspect-[4/3] bg-sand-100">
+                    <Image
+                      src={photo.src}
+                      alt={photo.caption}
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="px-4 py-3 text-sm text-ink-600">
+                    {photo.caption}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Factory + Team */}
+          <div className="mt-12 grid gap-6 md:grid-cols-2">
+            <div>
+              <h3 className="font-serif text-xl font-semibold text-ink-900 sm:text-2xl">
+                {events.gallery.factory.title}
+              </h3>
+              <div className="mt-5">
+                {isPlaceholder(events.gallery.factory.photos) ? (
+                  <Placeholder
+                    placeholder={events.gallery.factory.photos}
+                    locale={locale}
+                  />
+                ) : (
+                  <PhotoGrid photos={events.gallery.factory.photos} />
+                )}
+              </div>
+            </div>
+            <div>
+              <h3 className="font-serif text-xl font-semibold text-ink-900 sm:text-2xl">
+                {events.gallery.team.title}
+              </h3>
+              <div className="mt-5">
+                {isPlaceholder(events.gallery.team.photos) ? (
+                  <Placeholder
+                    placeholder={events.gallery.team.photos}
+                    locale={locale}
+                  />
+                ) : (
+                  <PhotoGrid photos={events.gallery.team.photos} />
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -112,5 +181,33 @@ export function AboutView({ locale }: { locale: Locale }) {
         </div>
       </section>
     </>
+  );
+}
+
+function PhotoGrid({
+  photos,
+}: {
+  photos: { src: string; caption: string }[];
+}) {
+  return (
+    <ul className="grid grid-cols-2 gap-3">
+      {photos.map((photo) => (
+        <li
+          key={photo.src}
+          className="overflow-hidden rounded-2xl bg-white ring-1 ring-ink-100"
+        >
+          <div className="relative aspect-[4/3] bg-sand-100">
+            <Image
+              src={photo.src}
+              alt={photo.caption}
+              fill
+              sizes="(max-width: 640px) 50vw, 25vw"
+              className="object-cover"
+            />
+          </div>
+          <div className="px-3 py-2 text-xs text-ink-600">{photo.caption}</div>
+        </li>
+      ))}
+    </ul>
   );
 }

@@ -54,6 +54,8 @@ type InquiryPayload = {
   otherPlatformName?: string;
   message?: string;
   items?: InquiryItemPayload[];
+  /** Files attached at the inquiry level (apply to whole RFQ, not a product). */
+  generalUploads?: InquiryUploadPayload[];
 };
 
 function isValidEmail(value: unknown): value is string {
@@ -157,6 +159,26 @@ export async function POST(request: Request) {
         .map(sanitizeItem)
     : [];
 
+  const generalUploads = Array.isArray(body.generalUploads)
+    ? body.generalUploads
+        .filter(
+          (u): u is InquiryUploadPayload =>
+            !!u &&
+            typeof u.storagePath === "string" &&
+            typeof u.originalFilename === "string",
+        )
+        .map((u) => ({
+          storage_path: u.storagePath,
+          original_filename: u.originalFilename,
+          mime_type: u.mimeType ?? null,
+          size_bytes:
+            typeof u.sizeBytes === "number" && Number.isFinite(u.sizeBytes)
+              ? Math.floor(u.sizeBytes)
+              : null,
+          kind: isValidUploadKind(u.kind) ? u.kind : null,
+        }))
+    : [];
+
   const inquiryRecord = {
     locale,
     name: body.name.trim(),
@@ -211,9 +233,10 @@ export async function POST(request: Request) {
       if (itemsErr || !insertedItems) {
         console.error("[inquiry] items insert failed", itemsErr, { inquiryId });
       } else {
-        // Aggregate uploads across all items, tagging each with the
-        // corresponding inserted item_id.
-        const uploadRows = items.flatMap((item, idx) =>
+        // Aggregate per-item uploads across all items, tagging each with
+        // the corresponding inserted item_id, plus inquiry-level general
+        // uploads with item_id = null.
+        const itemUploadRows = items.flatMap((item, idx) =>
           item.uploads.map((u) => ({
             inquiry_id: inquiry.id,
             item_id: insertedItems[idx]?.id ?? null,
@@ -224,6 +247,16 @@ export async function POST(request: Request) {
             kind: u.kind,
           })),
         );
+        const generalUploadRows = generalUploads.map((u) => ({
+          inquiry_id: inquiry.id,
+          item_id: null,
+          storage_path: u.storage_path,
+          original_filename: u.original_filename,
+          mime_type: u.mime_type,
+          size_bytes: u.size_bytes,
+          kind: u.kind,
+        }));
+        const uploadRows = [...itemUploadRows, ...generalUploadRows];
         if (uploadRows.length > 0) {
           const { error: uploadsErr } = await supabase
             .from("inquiry_uploads")
@@ -234,6 +267,25 @@ export async function POST(request: Request) {
             });
           }
         }
+      }
+    } else if (generalUploads.length > 0) {
+      // Items-less inquiry but general uploads exist — still persist them.
+      const generalUploadRows = generalUploads.map((u) => ({
+        inquiry_id: inquiry.id,
+        item_id: null,
+        storage_path: u.storage_path,
+        original_filename: u.original_filename,
+        mime_type: u.mime_type,
+        size_bytes: u.size_bytes,
+        kind: u.kind,
+      }));
+      const { error: uploadsErr } = await supabase
+        .from("inquiry_uploads")
+        .insert(generalUploadRows);
+      if (uploadsErr) {
+        console.error("[inquiry] general uploads insert failed", uploadsErr, {
+          inquiryId,
+        });
       }
     }
   } else {
@@ -250,7 +302,10 @@ export async function POST(request: Request) {
   // Skipped silently when Supabase isn't configured.
   const signedUrlMap = new Map<string, string>();
   if (supabase) {
-    const allPaths = items.flatMap((i) => i.uploads.map((u) => u.storage_path));
+    const allPaths = [
+      ...items.flatMap((i) => i.uploads.map((u) => u.storage_path)),
+      ...generalUploads.map((u) => u.storage_path),
+    ];
     if (allPaths.length > 0) {
       const { data: signed, error: signErr } = await supabase.storage
         .from(INQUIRY_UPLOADS_BUCKET)
@@ -298,6 +353,13 @@ export async function POST(request: Request) {
         storagePath: u.storage_path,
         signedUrl: signedUrlMap.get(u.storage_path),
       })),
+    })),
+    generalUploads: generalUploads.map((u) => ({
+      originalFilename: u.original_filename,
+      sizeBytes: u.size_bytes ?? 0,
+      kind: u.kind ?? undefined,
+      storagePath: u.storage_path,
+      signedUrl: signedUrlMap.get(u.storage_path),
     })),
     createdAt,
   });

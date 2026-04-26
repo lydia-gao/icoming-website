@@ -29,18 +29,89 @@ const en = {
     ],
   },
 
-  printing: {
-    eyebrow: "Printing & finishing",
-    heading: "Customization techniques.",
-    items: [
-      { name: "Screen printing", note: "1+ colors on fabric and paper" },
-      { name: "Digital print", note: "Photographic prints on fabric" },
-      { name: "Heat transfer", note: "Vivid, durable artwork" },
-      { name: "Embroidery", note: "Thread and 3D puff embroidery" },
-      { name: "Flexo / offset print", note: "For paper-bag runs" },
-      { name: "Hot stamping / foil", note: "Metallic and custom foils" },
-      { name: "Debossing / embossing", note: "For leather-feel finishes" },
-      { name: "Sublimation", note: "All-over print on polyester" },
+  customization: {
+    eyebrow: "Customization",
+    heading: "How we customize your bags.",
+    body:
+      "Printing, color matching, hardware, pockets — almost every detail can be tailored to brand. Send a brief and we'll suggest options with samples.",
+    groups: [
+      {
+        title: "Printing methods",
+        items: [
+          { name: "Screen printing", note: "1+ colors on fabric and paper" },
+          { name: "Digital print", note: "Photographic prints on fabric" },
+          { name: "Heat transfer", note: "Vivid, durable artwork" },
+          { name: "Embroidery", note: "Thread and 3D puff embroidery" },
+          { name: "Flexo / offset print", note: "For paper-bag runs" },
+          { name: "Hot stamping / foil", note: "Metallic and custom foils" },
+          { name: "Debossing / embossing", note: "For leather-feel finishes" },
+          { name: "Sublimation", note: "All-over print on polyester" },
+        ],
+      },
+      {
+        title: "Pantone color matching",
+        items: [
+          {
+            name: "Pantone-matched dyeing",
+            note: "Match the brand swatch on cotton, non-woven, polyester, and felt.",
+          },
+          {
+            name: "Custom thread color",
+            note: "For embroidery, stitching, and drawcords.",
+          },
+          {
+            name: "Custom print ink",
+            note: "Pantone-matched inks for screen, flexo, and offset print.",
+          },
+        ],
+      },
+      {
+        title: "Handles",
+        items: [
+          { name: "Cotton webbing", note: "Standard, soft, durable." },
+          { name: "Jute / hemp", note: "Natural, eco-friendly accent." },
+          { name: "PU / leatherette", note: "Premium-feel handles." },
+          { name: "Wood / bamboo", note: "Curved or beaded options." },
+          { name: "Rope", note: "Cotton, polyester, or natural-fiber rope." },
+          { name: "Self-fabric", note: "Cut from the bag fabric for a clean look." },
+        ],
+      },
+      {
+        title: "Pockets",
+        items: [
+          { name: "Inner zip pocket", note: "Secured zip pocket on the inner wall." },
+          { name: "Slip pocket", note: "Open slip pocket for quick access." },
+          { name: "Front patch pocket", note: "Branded patch pocket on the outer face." },
+          { name: "Phone pocket", note: "Sized for phone + cards." },
+          {
+            name: "Insulated compartment",
+            note: "For cooler / lunch / takeout bags.",
+          },
+        ],
+      },
+      {
+        title: "Additional features",
+        items: [
+          {
+            name: "Reinforced bottom",
+            note: "Cardboard insert or doubled fabric for heavier loads.",
+          },
+          { name: "Gusset", note: "Square or expanding gusset for capacity." },
+          { name: "Magnetic snap", note: "Clean closure without zippers." },
+          {
+            name: "Drawcord stopper",
+            note: "For drawstring and tote closures.",
+          },
+          {
+            name: "Hangtag / label",
+            note: "Cotton, leather, or paper hangtags; woven labels.",
+          },
+          {
+            name: "Custom carton",
+            note: "Branded master carton, polybag, or insert card.",
+          },
+        ],
+      },
     ],
   },
 
@@ -115,18 +186,89 @@ const zh: typeof en = {
     ],
   },
 
-  printing: {
-    eyebrow: "印刷与后道",
-    heading: "定制工艺。",
-    items: [
-      { name: "丝网印刷", note: "适用于面料及纸张,多色可选" },
-      { name: "数码印刷", note: "面料上的照片级印刷" },
-      { name: "热转印", note: "色彩鲜艳、持久耐用" },
-      { name: "刺绣", note: "平绣及 3D 立体绣" },
-      { name: "柔印 / 胶印", note: "适用于纸袋批量生产" },
-      { name: "烫金 / 烫印", note: "金属色及定制烫金" },
-      { name: "压凹 / 压凸", note: "营造皮质触感" },
-      { name: "热升华", note: "涤纶材质上的满版印花" },
+  customization: {
+    eyebrow: "定制服务",
+    heading: "我们如何为您的袋子做定制。",
+    body:
+      "印刷、调色、五金、口袋——几乎每个细节都可以按品牌定制。发送您的需求,我们会给出方案与样品建议。",
+    groups: [
+      {
+        title: "印刷工艺",
+        items: [
+          { name: "丝网印刷", note: "适用于面料及纸张,多色可选" },
+          { name: "数码印刷", note: "面料上的照片级印刷" },
+          { name: "热转印", note: "色彩鲜艳、持久耐用" },
+          { name: "刺绣", note: "平绣及 3D 立体绣" },
+          { name: "柔印 / 胶印", note: "适用于纸袋批量生产" },
+          { name: "烫金 / 烫印", note: "金属色及定制烫金" },
+          { name: "压凹 / 压凸", note: "营造皮质触感" },
+          { name: "热升华", note: "涤纶材质上的满版印花" },
+        ],
+      },
+      {
+        title: "Pantone 色彩定制",
+        items: [
+          {
+            name: "Pantone 配色染色",
+            note: "根据品牌色卡定制棉、无纺、涤纶、毛毡材料。",
+          },
+          {
+            name: "定制线材颜色",
+            note: "用于刺绣、缝合、抽绳等。",
+          },
+          {
+            name: "定制印刷油墨",
+            note: "丝印、柔印、胶印均可使用 Pantone 配色油墨。",
+          },
+        ],
+      },
+      {
+        title: "提手",
+        items: [
+          { name: "棉织带", note: "标准款,柔软耐用。" },
+          { name: "黄麻 / 麻", note: "天然环保的点缀。" },
+          { name: "PU / 仿皮", note: "质感更高级的提手。" },
+          { name: "木 / 竹", note: "弯曲或串珠款式。" },
+          { name: "绳索", note: "棉绳、涤纶绳、天然纤维绳均可选。" },
+          { name: "本料同色", note: "使用主体面料切割,造型简洁。" },
+        ],
+      },
+      {
+        title: "口袋",
+        items: [
+          { name: "内拉链袋", note: "内壁带拉链的安全口袋。" },
+          { name: "插袋", note: "开放式插袋,方便快速取放。" },
+          { name: "前贴袋", note: "外侧贴袋,可作为品牌位置。" },
+          { name: "手机袋", note: "适配手机和卡片。" },
+          {
+            name: "保温隔层",
+            note: "用于保温袋、午餐袋、外卖袋。",
+          },
+        ],
+      },
+      {
+        title: "其他细节",
+        items: [
+          {
+            name: "加固底部",
+            note: "纸板内衬或双层面料,适合承重需求。",
+          },
+          { name: "侧片 / 底片", note: "方底或可扩展底,提升容量。" },
+          { name: "磁性按扣", note: "无拉链的简洁闭合方式。" },
+          {
+            name: "绳扣",
+            note: "用于抽绳袋和手提袋。",
+          },
+          {
+            name: "吊牌 / 标签",
+            note: "棉、皮、纸吊牌或织标。",
+          },
+          {
+            name: "定制外箱",
+            note: "品牌外箱、塑料袋、内卡。",
+          },
+        ],
+      },
     ],
   },
 

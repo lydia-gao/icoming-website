@@ -36,12 +36,12 @@ export type Company = {
 
 export const company: Company = {
   legalName: "Pingyang Icom Bag Co., Ltd.",
-  brand: "ICOMing",
+  brand: "ICOM BAG",
   tagline:
     "Eco-friendly bag manufacturer — cotton totes, non-woven shoppers, cooler bags, and custom packaging.",
   foundedYear: 2006,
-  factorySqM: 2000,
-  workers: 30,
+  factorySqM: 3000,
+  workers: 60,
 
   contact: {
     primaryEmail: "sale1@i-coming.com",
