@@ -38,7 +38,7 @@ export const company: Company = {
   legalName: "Pingyang Icom Bag Co., Ltd.",
   brand: "ICOM BAG",
   tagline:
-    "Eco-friendly bag manufacturer — cotton totes, non-woven shoppers, cooler bags, and custom packaging.",
+    "Eco-friendly bag manufacturer in Wenzhou, China — cotton, non-woven, cooler, paper bags, and custom packaging for overseas brands.",
   foundedYear: 2006,
   factorySqM: 3000,
   workers: 60,
@@ -81,7 +81,7 @@ const companyTranslations: Partial<
   zh: {
     legalName: "平阳爱康箱包有限公司",
     brand: "爱康",
-    tagline: "环保袋专业制造商——棉布手提袋、无纺布购物袋、保温袋及定制包装。",
+    tagline: "中国温州的环保袋制造商——为海外品牌生产棉布、无纺布、保温、纸袋及定制包装。",
     contact: {
       address: {
         line1: "车站大道 2 号广场",

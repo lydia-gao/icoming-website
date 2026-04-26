@@ -163,7 +163,7 @@ const en = {
     eyebrow: "Inquiry",
     heading: "Your inquiry basket",
     intro:
-      "Saved products travel with you across the site. Add any notes, fill in your details, and our sales team will follow up by email.",
+      "Saved products are kept across the site. Add any notes, fill in your details, and our sales team will follow up by email.",
     savedProducts: (count: number) => `Saved products (${count})`,
     clearAll: "Clear all",
     emptyBasketA: "Nothing saved yet. Browse the catalog and click",
@@ -297,7 +297,7 @@ const zh: typeof en = {
     },
     inquiry: "询盘",
     inquiryBasket: "询盘清单",
-    getQuote: "免费报价",
+    getQuote: "获取报价",
     toggleMenu: "切换菜单",
     menu: "菜单",
     language: { en: "EN", zh: "中文", switchTo: "切换至" },

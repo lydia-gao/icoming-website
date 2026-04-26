@@ -8,7 +8,7 @@ import { placeholder } from "./_types";
 const en = {
   hero: {
     eyebrow: "Capabilities",
-    headline: "Materials, printing, and customization — all under one roof.",
+    headline: "Materials, printing, and customization — handled in-house.",
     body:
       "Our in-house team handles material sourcing, production, printing, and inspection. This page is an overview of what we can make; if you don't see something, ask — chances are we've made it.",
   },
@@ -146,7 +146,7 @@ const en = {
     eyebrow: "Compliance",
     heading: "Documentation for your market.",
     body:
-      "We support customers in Europe, North America, Asia-Pacific and beyond. Test reports and declarations are available on request.",
+      "We supply customers in Europe, North America, Asia-Pacific, and beyond. Test reports and declarations are available on request.",
     certifications: placeholder(
       "Active certifications",
       "List the certifications you actually hold today (e.g. BSCI audit, REACH, Prop 65, OEKO-TEX 100, GOTS, FSC, ISO 9001). Only list what you currently have valid documentation for.",
@@ -165,7 +165,7 @@ const en = {
 const zh: typeof en = {
   hero: {
     eyebrow: "生产能力",
-    headline: "材料、印刷与定制——全部在同一屋檐下完成。",
+    headline: "材料、印刷与定制——全部由自有团队完成。",
     body:
       "从原料采购、生产、印刷到检验,均由自有团队完成。本页面为我们的能力概览;若未看到您需要的款式,欢迎咨询——很可能我们已经做过。",
   },
@@ -188,7 +188,7 @@ const zh: typeof en = {
 
   customization: {
     eyebrow: "定制服务",
-    heading: "我们如何为您的袋子做定制。",
+    heading: "可定制的细节。",
     body:
       "印刷、调色、五金、口袋——几乎每个细节都可以按品牌定制。发送您的需求,我们会给出方案与样品建议。",
     groups: [
@@ -303,7 +303,7 @@ const zh: typeof en = {
     eyebrow: "合规",
     heading: "符合目标市场的文件要求。",
     body:
-      "我们服务的客户覆盖欧洲、北美、亚太及其他地区。测试报告与声明文件可根据需要提供。",
+      "我们的客户覆盖欧洲、北美、亚太及其他地区。测试报告与声明文件可根据需要提供。",
     certifications: placeholder(
       "现有认证",
       "列出目前实际持有的认证(如 BSCI、REACH、Prop 65、OEKO-TEX 100、GOTS、FSC、ISO 9001)。仅列出当前具备有效证书的项目。",
@@ -313,7 +313,7 @@ const zh: typeof en = {
   cta: {
     heading: "告知您的需求——我们将在一个工作日内报价。",
     body:
-      "请分享参考款式、目标数量及市场。专属销售将为您讲解材料、印刷工艺并提供准确的交期方案。",
+      "请分享参考款式、目标数量及市场。专属销售对接人将为您介绍材料、印刷工艺,并给出准确的交期方案。",
     primary: { label: "开启项目", href: "/contact" },
     secondary: { label: "浏览产品", href: "/products" },
   },

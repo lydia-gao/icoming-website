@@ -35,7 +35,7 @@ const en = {
     {
       label: "WhatsApp",
       primary: company.contact.whatsapp,
-      secondary: "Same-day reply, GMT+8 hours",
+      secondary: "Same-day reply (GMT+8)",
       href: `https://wa.me/${company.contact.whatsapp.replace(/[^\d]/g, "")}`,
       note: "Preferred by many overseas customers.",
     },
@@ -74,7 +74,7 @@ const zh: typeof en = {
       primary: company.contact.phone,
       secondary: "周一至周六,GMT+8",
       href: `tel:${company.contact.phone.replace(/[^+\d]/g, "")}`,
-      note: "紧急项目沟通优先选择。",
+      note: "紧急项目沟通的首选渠道。",
     },
     {
       label: "WhatsApp",

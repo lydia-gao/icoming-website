@@ -14,9 +14,9 @@ import type { Metric } from "./_types";
 const en = {
   hero: {
     eyebrow: "Pingyang · Wenzhou, China",
-    headline: "Eco-friendly bag manufacturing, built on trust.",
+    headline: "Eco-friendly bag manufacturing for overseas brands, since 2006.",
     subheadline:
-      "A factory producing cotton totes, non-woven shoppers, cooler bags, and custom packaging for brands, retailers, and distributors worldwide.",
+      "A 3,000 m² factory in Pingyang, Wenzhou. We make cotton, non-woven, cooler, and paper bags — plus custom packaging — for brands, retailers, and distributors worldwide.",
     primaryCta: { label: "Browse products", href: "/products" },
     secondaryCta: { label: "See capabilities", href: "/capabilities" },
   },
@@ -33,14 +33,14 @@ const en = {
       eyebrow: "Product categories",
       heading: "One factory, many product families.",
       body:
-        "From cotton shoppers to insulated food-delivery backpacks, we keep tooling and material expertise under one roof — so buyers can source a whole bag line from one supplier.",
+        "From cotton shoppers to insulated food-delivery backpacks, we keep tooling and material expertise in-house — so buyers can source a whole bag line from one supplier.",
     },
 
     editorial: {
       eyebrow: "Made with care",
-      heading: "Quiet craft, quietly consistent.",
+      heading: "Reliable production, long customer relationships.",
       body:
-        "Every piece leaves the factory inspected. Most of our customers have worked with us for years — because they can talk to the same people who run the production floor.",
+        "Every order is inspected before leaving the factory. Most of our customers have worked with us for years — they can talk directly to the people who run the production floor.",
       left: {
         image: "/images/editorial/corduroy-duo-white.jpg",
         caption: "Corduroy tote — natural & black",
@@ -55,7 +55,7 @@ const en = {
       eyebrow: "Featured products",
       heading: "A few representative models.",
       body:
-        "Proven base designs with full customization available — tailor material, size, print, and finishing for your brand.",
+        "Proven base designs, fully customizable — material, size, print, and finishing tailored for your brand.",
     },
 
     process: {
@@ -82,9 +82,9 @@ const en = {
 const zh: typeof en = {
   hero: {
     eyebrow: "中国浙江 · 温州平阳",
-    headline: "以信任为本的环保袋制造。",
+    headline: "环保袋制造,自 2006 年服务全球品牌。",
     subheadline:
-      "一家工厂,为全球品牌、零售商及分销商生产棉布手提袋、无纺布购物袋、保温袋及定制包装。",
+      "温州平阳的 3,000 m² 工厂,为全球品牌、零售商及分销商生产棉布手提袋、无纺布购物袋、保温袋、纸袋及定制包装。",
     primaryCta: { label: "浏览产品", href: "/products" },
     secondaryCta: { label: "了解生产能力", href: "/capabilities" },
   },
@@ -101,14 +101,14 @@ const zh: typeof en = {
       eyebrow: "产品分类",
       heading: "一家工厂,多条产品线。",
       body:
-        "从棉布购物袋到保温外卖背包,模具开发与材料经验都集中在同一屋檐下——客户可以在一家供应商处完成整条袋类产品的采购。",
+        "从棉布购物袋到保温外卖背包,模具开发与材料经验都由自有团队负责——客户可以在一家供应商处完成整条袋类产品的采购。",
     },
 
     editorial: {
       eyebrow: "用心制作",
-      heading: "安静的匠心,始终如一的品质。",
+      heading: "稳定的生产,长久的客户关系。",
       body:
-        "每一件产品出厂前都经过检验。多数客户与我们合作多年——因为他们可以直接与车间的负责人对话。",
+        "每一件产品出厂前都经过检验。多数客户与我们合作多年——他们随时都可以直接与车间负责人沟通。",
       left: {
         image: "/images/editorial/corduroy-duo-white.jpg",
         caption: "灯芯绒手提袋 — 本色与黑色",
@@ -123,7 +123,7 @@ const zh: typeof en = {
       eyebrow: "精选产品",
       heading: "几款代表性款式。",
       body:
-        "成熟的基础款式,支持全方位定制——材质、尺寸、印刷及后道工艺均可根据品牌需求调整。",
+        "成熟的基础款式,可全面定制——材质、尺寸、印刷及后道工艺均按品牌需求调整。",
     },
 
     process: {
@@ -138,9 +138,9 @@ const zh: typeof en = {
     },
 
     finalCta: {
-      heading: "准备开发下一款新袋?",
+      heading: "准备启动您的下一款袋类项目?",
       body:
-        "将心仪的产品加入询盘清单——告知我们品牌、目标数量及市场,我们将在一个工作日内回复。",
+        "将您感兴趣的款式加入询盘清单——告知我们品牌、目标数量及市场,我们将在一个工作日内回复。",
       primary: { label: "开始浏览", href: "/products" },
       secondary: { label: "联系销售", href: "/contact" },
     },

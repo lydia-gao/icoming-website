@@ -1,24 +1,29 @@
 import type { Locale } from "@/lib/i18n";
+import { categories } from "@/data/categories";
 import { placeholder } from "./_types";
 
 /**
  * ABOUT PAGE CONTENT — bilingual
+ *
+ * The "Today" timeline entry references categories.length so the
+ * category count stays in sync as the catalog evolves (Phase 6
+ * product CMS will add/remove categories).
  */
 
 const en = {
   hero: {
     eyebrow: "About us",
-    headline: "A manufacturer making bags for the world's brands.",
-    body: "Pingyang ICom Bag Co., Ltd. is an industrial-and-trade company specializing in the research, development, production, and sales of shopping bags, non-woven bags, packaging bags, suit covers, and takeaway insulation bags.",
+    headline: "A Pingyang factory making bags for overseas brands.",
+    body: "Pingyang ICom Bag Co., Ltd. is a manufacturer based in Pingyang, Zhejiang. We design, produce, and ship shopping bags, non-woven bags, packaging bags, garment covers, and food-delivery bags — mostly private-label and OEM orders for overseas brands.",
   },
 
   story: {
     eyebrow: "Our story",
-    heading: "From trader to trusted manufacturer.",
+    heading: "From trader to manufacturer.",
     paragraphs: [
-      "We started out as a pure foreign-trade company, sourcing bags for overseas clients. After years of factory visits, sampling runs, and cost negotiations, our clients pushed us to set up our own production so quality could be locked in at the source.",
-      "The factory is located in Pingyang County; the business department is in Wenzhou City. We run a 3,000 m² production floor with roughly 60 workers and dedicated business teams for overseas accounts.",
-      "Most of our customers find us through industry sourcing platforms — and stay with us for years because they can talk to the same people who run the factory floor.",
+      "We started as a foreign-trade company sourcing bags for overseas customers. After years of factory visits, sampling runs, and cost negotiations, our customers pushed us to set up our own production so quality could be controlled at the source.",
+      "The factory sits in Pingyang County; the sales office is in Wenzhou City. 3,000 m² of production floor, around 60 workers, and dedicated overseas-sales teams for every account.",
+      "Most of our customers find us through industry sourcing platforms — and stay with us for years because they can reach the people running the production floor directly.",
     ],
   },
 
@@ -42,7 +47,7 @@ const en = {
       {
         year: "Today",
         title: "Serving brands worldwide",
-        body: "Two sales teams, a dedicated sampling room, and a product catalog spanning 17 categories.",
+        body: `Two sales teams, a dedicated sampling room, and a product catalog spanning ${categories.length} categories.`,
       },
     ],
   },
@@ -57,7 +62,7 @@ const en = {
       },
       {
         title: "Transparent communication",
-        body: "Honest lead times, honest quantities, honest pricing. No intermediaries filtering messages.",
+        body: "Honest lead times, honest quantities, honest pricing — no intermediaries filtering your messages.",
       },
       {
         title: "Long-term partnership",
@@ -70,14 +75,14 @@ const en = {
     eyebrow: "Factory strength",
     heading: "Verified capabilities and credentials.",
     body:
-      "Independently assessed on Alibaba via SGS. Full certification documents available on request.",
+      "SGS-assessed via Alibaba.com. Full certification documents and test reports available on request.",
   },
 
   events: {
     eyebrow: "Events & trade shows",
     heading: "Meet us in person.",
     intro:
-      "We attend industry shows across the year and welcome customers at our Pingyang facility. A few recent moments below.",
+      "We attend industry trade shows throughout the year and welcome customer visits to our Pingyang facility. A few recent photos below.",
     gallery: {
       tradeshows: {
         title: "Trade shows",
@@ -116,17 +121,17 @@ const en = {
 const zh: typeof en = {
   hero: {
     eyebrow: "关于我们",
-    headline: "为全球品牌制袋的制造商。",
-    body: "平阳爱康箱包有限公司是一家工贸一体的企业,专注于购物袋、无纺布袋、包装袋、西服袋以及外卖保温袋的研发、生产与销售。",
+    headline: "为全球品牌制袋的温州平阳工厂。",
+    body: "平阳爱康箱包有限公司是一家工贸一体的制袋企业,自主完成研发、生产与销售,主要承接海外品牌的 OEM 与代工订单。产品涵盖购物袋、无纺布袋、包装袋、西服袋及外卖保温袋。",
   },
 
   story: {
     eyebrow: "我们的故事",
-    heading: "从外贸商到值得信赖的制造商。",
+    heading: "从外贸商到自有工厂。",
     paragraphs: [
-      "我们最初是一家纯外贸公司,为海外客户采购各类箱包。经过多年的工厂走访、打样和成本谈判,客户鼓励我们建立自己的生产基地,将品质从源头锁定。",
-      "工厂位于平阳县,业务部门设在温州市。拥有 3,000 m² 的生产车间和约 60 名工人,并设有专门服务海外客户的业务团队。",
-      "多数客户是通过行业采购平台找到我们的——他们之所以长期合作,是因为随时都可以直接与车间负责人沟通。",
+      "我们最初是一家纯外贸公司,为海外客户采购各类箱包。多年的工厂走访、打样和成本谈判之后,客户推动我们自建生产线,把品质从源头管起来。",
+      "工厂位于平阳县,业务部门设在温州市。3,000 m² 的生产车间、约 60 名工人,以及专门服务海外客户的业务团队。",
+      "多数客户是通过行业采购平台找到我们的——之所以能够长期合作,是因为他们可以随时直接与车间负责人沟通。",
     ],
   },
 
@@ -150,7 +155,7 @@ const zh: typeof en = {
       {
         year: "至今",
         title: "服务全球品牌",
-        body: "两支销售团队、独立打样间,以及涵盖 17 个品类的产品目录。",
+        body: `两支销售团队、独立打样间,以及涵盖 ${categories.length} 个品类的产品目录。`,
       },
     ],
   },
@@ -160,12 +165,12 @@ const zh: typeof en = {
     heading: "我们的经营方式。",
     items: [
       {
-        title: "环保优先",
+        title: "环保为标配",
         body: "优先采用可回收、可降解和再生面料。如有需求,可提供无塑料包装。",
       },
       {
         title: "透明沟通",
-        body: "如实告知交期、产能和价格。没有中间环节过滤信息。",
+        body: "交期透明、产能透明、价格透明——没有中间环节过滤您的信息。",
       },
       {
         title: "长期合作",
@@ -178,14 +183,14 @@ const zh: typeof en = {
     eyebrow: "工厂实力",
     heading: "经核验的产能与资质。",
     body:
-      "通过 SGS 阿里巴巴实地认证。完整证书资料可根据需求提供。",
+      "已通过 SGS 在阿里巴巴的实地认证,完整证书与测试报告可根据需求提供。",
   },
 
   events: {
     eyebrow: "展会与活动",
     heading: "期待与您面对面。",
     intro:
-      "我们全年参加多场行业展会,也欢迎客户来平阳工厂参观。以下是近期的一些瞬间。",
+      "我们全年参加多场行业展会,也欢迎客户到平阳工厂实地考察。以下是近期的一些照片。",
     gallery: {
       tradeshows: {
         title: "展会现场",
