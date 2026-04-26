@@ -403,7 +403,7 @@ function StatusPill({
   if (!customized) {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full bg-ink-50 px-3 py-1 text-xs font-medium text-ink-600 ring-1 ring-inset ring-ink-100">
-        <span className="h-1.5 w-1.5 rounded-full bg-ink-300" />
+        <span className="h-1.5 w-1.5 rounded-full bg-ink-400" />
         Currently using default
       </span>
     );

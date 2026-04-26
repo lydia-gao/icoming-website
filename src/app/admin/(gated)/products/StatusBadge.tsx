@@ -15,8 +15,11 @@ const LABELS: Record<ProductStatus, string> = {
   archived: "Archived",
 };
 
+// ink-400 is the lightest mid-gray defined in the Tailwind palette
+// (see tailwind.config.ts); ink-300 / ink-500 are NOT defined and
+// silently render as transparent, hiding the dot.
 const DOT_STYLES: Record<ProductStatus, string> = {
-  draft: "bg-ink-500",
+  draft: "bg-ink-400",
   published: "bg-moss-700",
   archived: "bg-clay-500",
 };
