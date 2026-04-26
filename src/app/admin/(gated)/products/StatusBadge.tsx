@@ -16,7 +16,7 @@ const LABELS: Record<ProductStatus, string> = {
 };
 
 const DOT_STYLES: Record<ProductStatus, string> = {
-  draft: "bg-ink-300",
+  draft: "bg-ink-500",
   published: "bg-moss-700",
   archived: "bg-clay-500",
 };

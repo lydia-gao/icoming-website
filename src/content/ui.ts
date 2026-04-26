@@ -59,6 +59,7 @@ const en = {
     customOrder: "Custom order",
     startingFrom: "From",
     perPiece: "/ pc",
+    summaryFallback: "Quote on request — get in touch for specs.",
   },
 
   categoryCard: {
@@ -333,6 +334,7 @@ const zh: typeof en = {
     customOrder: "按需定制",
     startingFrom: "起价",
     perPiece: "/ 件",
+    summaryFallback: "欢迎来询,联系我们了解规格详情。",
   },
 
   categoryCard: {

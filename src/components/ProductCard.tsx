@@ -46,7 +46,9 @@ export function ProductCard({ product, locale }: { product: Product; locale: Loc
           </Link>
         </h3>
 
-        <p className="line-clamp-2 text-sm text-ink-600">{product.summary}</p>
+        <p className="line-clamp-2 text-sm text-ink-600">
+          {product.summary || ui.summaryFallback}
+        </p>
 
         <div className="mt-auto flex items-end justify-between gap-2 pt-2">
           <div className="text-xs text-ink-500">

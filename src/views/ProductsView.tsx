@@ -84,7 +84,10 @@ export async function ProductsView({ locale }: { locale: Locale }) {
             </ul>
           </aside>
 
-          <div className="grid gap-5 sm:gap-6 sm:grid-cols-2 xl:grid-cols-3">
+          {/* lg:self-start prevents the products column from stretching to
+              match the sidebar's ~600px height. Without it, a sparse catalog
+              (e.g. a single test product) would yield comically tall cards. */}
+          <div className="grid gap-5 sm:gap-6 sm:grid-cols-2 xl:grid-cols-3 lg:self-start">
             {products.map((p) => (
               <ProductCard key={p.slug} product={p} locale={locale} />
             ))}
