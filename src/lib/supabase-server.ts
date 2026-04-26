@@ -43,14 +43,19 @@ export async function createSupabaseServerClient(): Promise<SupabaseClient | nul
 /**
  * Convenience wrapper that checks whether the current request's
  * authenticated user's email is in the admin_users allowlist.
- * Returns the admin row or null.
+ * Returns the admin row + auth user id, or null.
  *
  * Uses `ilike` (case-insensitive) on the DB side so a mixed-case
  * value in admin_users.email matches the lower-cased auth email.
  * The companion SQL `is_admin()` function does `lower(au.email)`
  * on both sides — this query mirrors that behavior.
+ *
+ * `user_id` is the auth.users.id — used as the FK target for
+ * `updated_by` on CMS rows. It's the auth user, not the admin_users
+ * row id, because the FK in the schema points to auth.users.
  */
 export async function requireAdminRow(): Promise<{
+  user_id: string;
   email: string;
   full_name: string | null;
   role: "sales" | "admin";
@@ -59,7 +64,7 @@ export async function requireAdminRow(): Promise<{
   if (!supabase) return null;
 
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user?.email) return null;
+  if (!user?.email || !user.id) return null;
 
   const { data, error } = await supabase
     .from("admin_users")
@@ -70,6 +75,7 @@ export async function requireAdminRow(): Promise<{
 
   if (error || !data) return null;
   return {
+    user_id: user.id,
     email: data.email,
     full_name: data.full_name,
     role: data.role as "sales" | "admin",

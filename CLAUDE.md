@@ -20,9 +20,10 @@ Primary contact: Lydia Gao (`Lydia.Gao@cci.com`).
 Next.js 15 App Router · React 19 · TypeScript · Tailwind CSS ·
 Supabase (Postgres + Auth + Storage) · Resend · Vercel.
 
-No CMS. No separate backend. No ORM — plain `@supabase/supabase-js`.
-Auth is Supabase email + password (V1; magic-link deferred until
-custom SMTP is configured).
+No third-party CMS — sales-editable content lives in Supabase tables
+(see Phase 5 below). No separate backend. No ORM — plain
+`@supabase/supabase-js`. Auth is Supabase email + password (V1;
+magic-link deferred until custom SMTP is configured).
 
 ## Phases delivered
 
@@ -39,12 +40,20 @@ custom SMTP is configured).
    `admin_users` allowlist, inquiry list with search/filter/sort/
    pagination, inquiry detail with editable status/assignee/internal-
    notes and fresh 1-hour signed download URLs.
+4. **Phase 5** — Content CMS V1. Sales can edit fixed-section text +
+   images and manage repeatable cards (Customization groups,
+   Factory/Team/Trade-show galleries, Why Choose Us cards,
+   Credentials) via `/admin/content`. Static files in
+   `src/content/*.ts` remain the default; CMS rows override.
+   Three tables + a public storage bucket (migration `0004_cms.sql`).
+   Soft delete with restore UI; bilingual EN/ZH side-by-side editing.
 
 ## Not done (don't build unprompted)
 
-- **Phase 5** — admin-managed product catalog (DB-backed products,
+- **Phase 6** — admin-managed product catalog (DB-backed products,
   CRUD UI, image uploads for product assets). Products still live in
-  `src/data/products.ts` until then.
+  `src/data/products.ts` until then. Note: do NOT extend the Phase 5
+  CMS into a page-builder — layout stays hardcoded.
 - Operational items in [`docs/FUTURE-TODO.md`](docs/FUTURE-TODO.md):
   Resend domain verification, separate preview/prod Supabase
   projects, error monitoring, SEO polish, prod DB hardening.
@@ -78,16 +87,21 @@ clay-colored "To be provided" card on the page. Never fabricate
 numbers (MOQ, cert validity, export-country counts, etc.) to look
 complete.
 
-**Supabase clients** — three flavours, match them to context:
+**Supabase clients** — four flavours, match them to context:
 - `src/lib/supabase.ts` → **service-role** client. Server-only. RLS
-  bypass. Used by API routes.
+  bypass. Used by admin API routes (after `requireAdminRow()`) and
+  for service-side reads where RLS would block the operation.
 - `src/lib/supabase-browser.ts` → **publishable** client built via
   `createBrowserClient` from `@supabase/ssr`. Client components.
-  For direct browser → Storage uploads and `signInWithPassword`
-  calls. Subject to RLS.
+  For direct browser → Storage uploads (`inquiry-uploads`,
+  `cms-images`) and `signInWithPassword` calls. Subject to RLS.
 - `src/lib/supabase-server.ts` → **cookies-aware server** client for
   server components / route handlers that need the *authenticated
-  user's* session. Exports `requireAdminRow()` helper.
+  user's* session. Exports `requireAdminRow()` helper which returns
+  `{ user_id, email, full_name, role }`.
+- `src/lib/supabase-public.ts` → **anonymous publishable** client
+  (no cookies, no session). Server-side reads of public CMS content
+  in marketing pages — keeps the service-role surface small.
 
 **Env names.** Code accepts both the new and legacy Supabase key
 models: prefer `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` /
@@ -129,9 +143,33 @@ the browser — validates name+email, inserts inquiry+items+uploads,
 generates signed URLs for the sales email, sends via Resend best-
 effort. `/api/admin/*` requires `requireAdminRow()` first.
 
+**Content CMS V1.** Sales-managed text + images + cards layered on
+top of static defaults. See [`docs/PHASE-5-CMS.md`](docs/PHASE-5-CMS.md)
+for the full operator/dev guide. Key pieces:
+- Three tables: `cms_sections` (singletons), `cms_groups`,
+  `cms_cards`. Public `cms-images` Storage bucket for uploads.
+- `src/lib/cms-schemas.ts` is the declarative source of truth —
+  adding a new editable section means adding an entry there and
+  wiring the view to merge `pickField` / `loadCmsSection` /
+  `loadCmsCards` over the static fallback.
+- Static-first fallback: empty DB renders identically to today.
+  Sections are per-field overrides; card sections are
+  all-or-nothing (any active group → CMS replaces static).
+- Cache: views call `loadCmsSection` / `loadCmsCards` (both wrapped
+  in `unstable_cache` with the `"cms"` tag). Admin writes call
+  `flushCmsCaches(page)` from `src/lib/cms-revalidate.ts` to
+  invalidate. New sections need an entry in `pathsForPage()`.
+- Soft delete (`active=false`) for groups/cards. Public RLS hides
+  them; admin restore UI in the card manager brings them back.
+- Image uploads go browser → Supabase Storage directly via
+  `uploadCmsImage` (RLS gates inserts to `is_admin()`).
+- `next.config.ts` whitelists `*.supabase.co/storage/v1/object/public/**`
+  for `next/image`.
+
 **Migrations are append-only.** Don't edit an already-applied SQL
-file. Add `0004_*.sql`, `0005_*.sql`. The three existing files ran
-at various points in dev; structure new work accordingly.
+file. Add `0005_*.sql`, `0006_*.sql`. The four existing files
+(`0001`–`0004`) ran at various points in dev; structure new work
+accordingly.
 
 ## Code conventions — prescriptive
 
@@ -224,8 +262,8 @@ at various points in dev; structure new work accordingly.
    flattened repo path).
 3. Create `.env.local` from `.env.example` with the Supabase URL +
    publishable + secret keys and the Resend API key.
-4. The Supabase project itself is pre-existing — migrations `0001`,
-   `0002`, `0003` have already been applied there. No SQL to run on
+4. The Supabase project itself is pre-existing — migrations
+   `0001`-`0004` have already been applied there. No SQL to run on
    a fresh clone, just point env vars at the same project.
 5. `npm run dev`, visit `http://localhost:3000`.
 6. For admin: provision an auth user (Dashboard → Authentication →
@@ -235,8 +273,9 @@ at various points in dev; structure new work accordingly.
    `/admin` and sign in.
 
 Full first-time setup (if the Supabase project is being recreated
-from scratch) lives in [`docs/PHASE-1-SETUP.md`](docs/PHASE-1-SETUP.md)
-and [`docs/PHASE-4-ADMIN.md`](docs/PHASE-4-ADMIN.md).
+from scratch) lives in [`docs/PHASE-1-SETUP.md`](docs/PHASE-1-SETUP.md),
+[`docs/PHASE-4-ADMIN.md`](docs/PHASE-4-ADMIN.md), and
+[`docs/PHASE-5-CMS.md`](docs/PHASE-5-CMS.md).
 
 ## Don'ts
 
@@ -251,8 +290,10 @@ and [`docs/PHASE-4-ADMIN.md`](docs/PHASE-4-ADMIN.md).
 - Don't remove RLS policies without a replacement.
 - Don't push without running `npm run build` locally.
 - Don't commit secrets. `.env.local` stays local.
-- Don't add a CMS, payment gateway, or buyer-side account system
-  without explicit scope — none are planned.
+- Don't add a payment gateway or buyer-side account system
+  without explicit scope — none are planned. The Phase 5 content
+  CMS is intentionally NOT a page-builder; sales can edit declared
+  sections only. Don't extend it into one.
 
 ## Memory files
 

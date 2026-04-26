@@ -9,12 +9,25 @@ import { getFeaturedProducts } from "@/data/products";
 import { homeContent, marqueeTiles } from "@/content/home";
 import { uiContent } from "@/content/ui";
 import { isPlaceholder } from "@/content/_types";
+import { loadCmsSection, pickField } from "@/lib/cms";
 import { localePath, type Locale } from "@/lib/i18n";
 
-export function HomeView({ locale }: { locale: Locale }) {
+export async function HomeView({ locale }: { locale: Locale }) {
   const featured = getFeaturedProducts(4, locale);
   const featuredCategories = getLocalizedCategories(locale).slice(0, 8);
-  const { hero, heroMetrics, sections } = homeContent[locale];
+  const { hero: staticHero, heroMetrics, sections } = homeContent[locale];
+  const heroCms = await loadCmsSection("home.hero");
+  const hero = {
+    eyebrow:
+      pickField(heroCms?.fields, "eyebrow", locale) ?? staticHero.eyebrow,
+    headline:
+      pickField(heroCms?.fields, "headline", locale) ?? staticHero.headline,
+    subheadline:
+      pickField(heroCms?.fields, "subheadline", locale) ??
+      staticHero.subheadline,
+    primaryCta: staticHero.primaryCta,
+    secondaryCta: staticHero.secondaryCta,
+  };
   const tiles = marqueeTiles[locale];
   const ui = uiContent[locale].home;
 

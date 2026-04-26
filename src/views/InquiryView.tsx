@@ -646,15 +646,25 @@ function InquiryLineItem({
             >
               {item.name}
             </Link>
-            <ItemMenu
-              locale={locale}
-              onAddAttachment={() => fileInputRef.current?.click()}
-              onAddNote={() => {
-                setNoteOpen(true);
-                queueMicrotask(() => noteRef.current?.focus());
-              }}
-              onRemove={onRemove}
-            />
+            <div className="flex shrink-0 items-center gap-0.5">
+              <button
+                type="button"
+                onClick={onRemove}
+                aria-label={ui.removeAria(item.name)}
+                title={ui.remove}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-ink-400 transition hover:bg-clay-500/10 hover:text-clay-600"
+              >
+                <CloseIcon className="h-4 w-4" aria-hidden />
+              </button>
+              <ItemMenu
+                locale={locale}
+                onAddAttachment={() => fileInputRef.current?.click()}
+                onAddNote={() => {
+                  setNoteOpen(true);
+                  queueMicrotask(() => noteRef.current?.focus());
+                }}
+              />
+            </div>
           </div>
 
           {variantChips.length > 0 && (
@@ -719,12 +729,10 @@ function ItemMenu({
   locale,
   onAddAttachment,
   onAddNote,
-  onRemove,
 }: {
   locale: Locale;
   onAddAttachment: () => void;
   onAddNote: () => void;
-  onRemove: () => void;
 }) {
   const ui = uiContent[locale].inquiryPage.itemMenu;
   const [open, setOpen] = useState(false);
@@ -775,9 +783,6 @@ function ItemMenu({
         >
           <MenuItem onClick={fire(onAddAttachment)}>{ui.addAttachment}</MenuItem>
           <MenuItem onClick={fire(onAddNote)}>{ui.addNote}</MenuItem>
-          <MenuItem onClick={fire(onRemove)} danger>
-            {ui.removeProduct}
-          </MenuItem>
         </ul>
       )}
     </div>
@@ -991,6 +996,26 @@ function DotsIcon({
       <circle cx="5" cy="12" r="1.6" />
       <circle cx="12" cy="12" r="1.6" />
       <circle cx="19" cy="12" r="1.6" />
+    </svg>
+  );
+}
+
+function CloseIcon({
+  className = "",
+  ...rest
+}: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      {...rest}
+    >
+      <path d="M6 6l12 12M18 6L6 18" />
     </svg>
   );
 }

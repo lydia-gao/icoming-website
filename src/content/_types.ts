@@ -40,14 +40,16 @@ export type Metric =
 
 /**
  * A certification or credential card.
- * `image` optional — cards without a real document render as placeholder cards.
+ * Cards with no `image` render as an icon tile; the title/subtitle/issuer
+ * still show, so a CMS-managed credential is useful even before the
+ * scan has been uploaded.
  */
 export type Credential =
   | {
       title: string;
       subtitle?: string;
-      image: string;
-      imageAlt: string;
+      image?: string;
+      imageAlt?: string;
       issuer?: string;
       validity?: string;
     }

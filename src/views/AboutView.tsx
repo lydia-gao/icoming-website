@@ -2,14 +2,118 @@ import Image from "next/image";
 import Link from "next/link";
 import { aboutContent } from "@/content/about";
 import { trustContent } from "@/content/trust";
-import { isPlaceholder } from "@/content/_types";
+import { isPlaceholder, type Credential } from "@/content/_types";
 import { Placeholder } from "@/components/Placeholder";
 import { CertStrip } from "@/components/CertStrip";
+import {
+  cmsImageUrl,
+  loadCmsCards,
+  loadCmsSection,
+  pickField,
+  pickLocaleText,
+  pickParagraphs,
+  type CmsCardRow,
+} from "@/lib/cms";
 import { localePath, type Locale } from "@/lib/i18n";
 
-export function AboutView({ locale }: { locale: Locale }) {
-  const { hero, story, timeline, values, factoryStrength, events, cta } =
-    aboutContent[locale];
+type Photo = { src: string; caption: string };
+
+export async function AboutView({ locale }: { locale: Locale }) {
+  const a = aboutContent[locale];
+  const [
+    heroCms,
+    storyCms,
+    eventsCms,
+    valuesCms,
+    factoryStrengthCms,
+    factoryCms,
+    teamCms,
+    tradeshowsCms,
+    valuesItemsCms,
+    credentialsCms,
+  ] = await Promise.all([
+    loadCmsSection("about.hero"),
+    loadCmsSection("about.story"),
+    loadCmsSection("about.events"),
+    loadCmsSection("about.values"),
+    loadCmsSection("about.factoryStrength"),
+    loadCmsCards("about.events.factory"),
+    loadCmsCards("about.events.team"),
+    loadCmsCards("about.events.tradeshows"),
+    loadCmsCards("about.values.items"),
+    loadCmsCards("trust.credentials"),
+  ]);
+
+  const hero = {
+    eyebrow: pickField(heroCms?.fields, "eyebrow", locale) ?? a.hero.eyebrow,
+    headline:
+      pickField(heroCms?.fields, "headline", locale) ?? a.hero.headline,
+    body: pickField(heroCms?.fields, "body", locale) ?? a.hero.body,
+  };
+  const story = {
+    eyebrow: pickField(storyCms?.fields, "eyebrow", locale) ?? a.story.eyebrow,
+    heading:
+      pickField(storyCms?.fields, "heading", locale) ?? a.story.heading,
+    paragraphs:
+      pickParagraphs(storyCms?.fields, "paragraphs", locale) ??
+      a.story.paragraphs,
+  };
+  const events = {
+    eyebrow:
+      pickField(eventsCms?.fields, "eyebrow", locale) ?? a.events.eyebrow,
+    heading:
+      pickField(eventsCms?.fields, "heading", locale) ?? a.events.heading,
+    intro: pickField(eventsCms?.fields, "intro", locale) ?? a.events.intro,
+  };
+
+  const factoryGallery = cardsToPhotos(factoryCms.cards, locale);
+  const teamGallery = cardsToPhotos(teamCms.cards, locale);
+  const tradeshowsGallery = cardsToPhotos(tradeshowsCms.cards, locale);
+
+  const factoryPhotos =
+    factoryGallery.length > 0 ? factoryGallery : a.events.gallery.factory.photos;
+  const teamPhotos =
+    teamGallery.length > 0 ? teamGallery : a.events.gallery.team.photos;
+  const tradeshowPhotos =
+    tradeshowsGallery.length > 0
+      ? tradeshowsGallery
+      : a.events.gallery.tradeshows.photos;
+
+  const cmsValueItems =
+    valuesItemsCms.cards.length > 0
+      ? valuesItemsCms.cards.map((card) => ({
+          title:
+            (locale === "en" ? card.title_en : card.title_zh) ?? "",
+          body:
+            (locale === "en" ? card.description_en : card.description_zh) ?? "",
+        }))
+      : null;
+  const values = {
+    eyebrow: pickField(valuesCms?.fields, "eyebrow", locale) ?? a.values.eyebrow,
+    heading:
+      pickField(valuesCms?.fields, "heading", locale) ?? a.values.heading,
+    items: cmsValueItems ?? a.values.items,
+  };
+
+  const factoryStrength = {
+    eyebrow:
+      pickField(factoryStrengthCms?.fields, "eyebrow", locale) ??
+      a.factoryStrength.eyebrow,
+    heading:
+      pickField(factoryStrengthCms?.fields, "heading", locale) ??
+      a.factoryStrength.heading,
+    body:
+      pickField(factoryStrengthCms?.fields, "body", locale) ??
+      a.factoryStrength.body,
+  };
+
+  const cmsCredentials =
+    credentialsCms.cards.length > 0
+      ? credentialsCms.cards.map((card) => cardToCredential(card, locale))
+      : null;
+  const credentials = cmsCredentials ?? trustContent[locale].credentials;
+
+  const { timeline, cta } = a;
   const resolveHref = (href: string) => localePath(locale, href);
 
   return (
@@ -86,7 +190,7 @@ export function AboutView({ locale }: { locale: Locale }) {
         eyebrow={factoryStrength.eyebrow}
         heading={factoryStrength.heading}
         body={factoryStrength.body}
-        credentials={trustContent[locale].credentials}
+        credentials={credentials}
         locale={locale}
       />
 
@@ -101,60 +205,60 @@ export function AboutView({ locale }: { locale: Locale }) {
           {/* Trade shows */}
           <div className="mt-12">
             <h3 className="font-serif text-xl font-semibold text-ink-900 sm:text-2xl">
-              {events.gallery.tradeshows.title}
+              {a.events.gallery.tradeshows.title}
             </h3>
-            <ul className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {events.gallery.tradeshows.photos.map((photo) => (
-                <li
-                  key={photo.src}
-                  className="overflow-hidden rounded-2xl bg-white ring-1 ring-ink-100"
-                >
-                  <div className="relative aspect-[4/3] bg-sand-100">
-                    <Image
-                      src={photo.src}
-                      alt={photo.caption}
-                      fill
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                      className="object-cover"
-                    />
-                  </div>
-                  <div className="px-4 py-3 text-sm text-ink-600">
-                    {photo.caption}
-                  </div>
-                </li>
-              ))}
-            </ul>
+            {isPlaceholder(tradeshowPhotos) ? (
+              <div className="mt-5">
+                <Placeholder placeholder={tradeshowPhotos} locale={locale} />
+              </div>
+            ) : (
+              <ul className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {tradeshowPhotos.map((photo, i) => (
+                  <li
+                    key={`${photo.src}-${i}`}
+                    className="overflow-hidden rounded-2xl bg-white ring-1 ring-ink-100"
+                  >
+                    <div className="relative aspect-[4/3] bg-sand-100">
+                      <Image
+                        src={photo.src}
+                        alt={photo.caption}
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                        className="object-cover"
+                      />
+                    </div>
+                    <div className="px-4 py-3 text-sm text-ink-600">
+                      {photo.caption}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           {/* Factory + Team */}
           <div className="mt-12 grid gap-6 md:grid-cols-2">
             <div>
               <h3 className="font-serif text-xl font-semibold text-ink-900 sm:text-2xl">
-                {events.gallery.factory.title}
+                {a.events.gallery.factory.title}
               </h3>
               <div className="mt-5">
-                {isPlaceholder(events.gallery.factory.photos) ? (
-                  <Placeholder
-                    placeholder={events.gallery.factory.photos}
-                    locale={locale}
-                  />
+                {isPlaceholder(factoryPhotos) ? (
+                  <Placeholder placeholder={factoryPhotos} locale={locale} />
                 ) : (
-                  <PhotoGrid photos={events.gallery.factory.photos} />
+                  <PhotoGrid photos={factoryPhotos} />
                 )}
               </div>
             </div>
             <div>
               <h3 className="font-serif text-xl font-semibold text-ink-900 sm:text-2xl">
-                {events.gallery.team.title}
+                {a.events.gallery.team.title}
               </h3>
               <div className="mt-5">
-                {isPlaceholder(events.gallery.team.photos) ? (
-                  <Placeholder
-                    placeholder={events.gallery.team.photos}
-                    locale={locale}
-                  />
+                {isPlaceholder(teamPhotos) ? (
+                  <Placeholder placeholder={teamPhotos} locale={locale} />
                 ) : (
-                  <PhotoGrid photos={events.gallery.team.photos} />
+                  <PhotoGrid photos={teamPhotos} />
                 )}
               </div>
             </div>
@@ -184,16 +288,12 @@ export function AboutView({ locale }: { locale: Locale }) {
   );
 }
 
-function PhotoGrid({
-  photos,
-}: {
-  photos: { src: string; caption: string }[];
-}) {
+function PhotoGrid({ photos }: { photos: Photo[] }) {
   return (
     <ul className="grid grid-cols-2 gap-3">
-      {photos.map((photo) => (
+      {photos.map((photo, i) => (
         <li
-          key={photo.src}
+          key={`${photo.src}-${i}`}
           className="overflow-hidden rounded-2xl bg-white ring-1 ring-ink-100"
         >
           <div className="relative aspect-[4/3] bg-sand-100">
@@ -210,4 +310,42 @@ function PhotoGrid({
       ))}
     </ul>
   );
+}
+
+/** Convert CMS card rows into the {src, caption} shape PhotoGrid expects.
+ *  Cards without an uploaded image are skipped (galleries need a photo). */
+function cardsToPhotos(cards: CmsCardRow[], locale: Locale): Photo[] {
+  return cards
+    .map((c): Photo | null => {
+      const src = cmsImageUrl(c.image_path);
+      if (!src) return null;
+      const caption = locale === "en" ? c.title_en : c.title_zh;
+      return { src, caption: caption ?? "" };
+    })
+    .filter((p): p is Photo => p !== null);
+}
+
+/** Convert a CMS card row into a Credential for the CertStrip.
+ *  Image is optional — CertStrip falls back to an icon tile when null. */
+function cardToCredential(card: CmsCardRow, locale: Locale): Credential {
+  const title =
+    (locale === "en" ? card.title_en : card.title_zh) ??
+    card.title_en ??
+    card.title_zh ??
+    "";
+  const subtitle =
+    (locale === "en" ? card.description_en : card.description_zh) ?? undefined;
+  const image = cmsImageUrl(card.image_path) ?? undefined;
+  const imageAlt =
+    (locale === "en" ? card.image_alt_en : card.image_alt_zh) ?? undefined;
+  const issuer = pickLocaleText(card.meta?.issuer, locale) ?? undefined;
+  const validity = pickLocaleText(card.meta?.validity, locale) ?? undefined;
+  return {
+    title,
+    subtitle: subtitle || undefined,
+    image,
+    imageAlt: imageAlt || undefined,
+    issuer,
+    validity,
+  };
 }

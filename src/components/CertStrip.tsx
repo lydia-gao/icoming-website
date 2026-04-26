@@ -33,13 +33,19 @@ export function CertStrip({ eyebrow, heading, body, credentials, locale }: Props
                 className="flex flex-col overflow-hidden rounded-2xl bg-white ring-1 ring-ink-100"
               >
                 <div className="relative aspect-[5/7] bg-sand-50">
-                  <Image
-                    src={cred.image}
-                    alt={cred.imageAlt}
-                    fill
-                    sizes="(max-width: 640px) 100vw, 33vw"
-                    className="object-contain p-4"
-                  />
+                  {cred.image ? (
+                    <Image
+                      src={cred.image}
+                      alt={cred.imageAlt ?? cred.title}
+                      fill
+                      sizes="(max-width: 640px) 100vw, 33vw"
+                      className="object-contain p-4"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-ink-300">
+                      <CertIcon className="h-10 w-10" aria-hidden />
+                    </div>
+                  )}
                 </div>
                 <figcaption className="border-t border-ink-100 p-4">
                   <div className="font-semibold text-ink-900">{cred.title}</div>
@@ -58,5 +64,27 @@ export function CertStrip({ eyebrow, heading, body, credentials, locale }: Props
         </div>
       </div>
     </section>
+  );
+}
+
+function CertIcon({
+  className = "",
+  ...rest
+}: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      {...rest}
+    >
+      <path d="M9 12l2 2 4-4" />
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 21l-2 2 4-2 4 2-2-2" />
+    </svg>
   );
 }

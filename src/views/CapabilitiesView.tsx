@@ -4,11 +4,61 @@ import { uiContent } from "@/content/ui";
 import { Placeholder } from "@/components/Placeholder";
 import { CustomizationGroup } from "@/components/CustomizationGroup";
 import { isPlaceholder } from "@/content/_types";
+import {
+  cmsImageUrl,
+  loadCmsCards,
+  loadCmsSection,
+  pickField,
+} from "@/lib/cms";
 import { localePath, type Locale } from "@/lib/i18n";
 
-export function CapabilitiesView({ locale }: { locale: Locale }) {
-  const { hero, materials, customization, moq, leadTime, qc, compliance, cta } =
-    capabilitiesContent[locale];
+type CustomizationItem = { name: string; note?: string; image?: string };
+type CustomizationGroupShape = { title: string; items: CustomizationItem[] };
+
+export async function CapabilitiesView({ locale }: { locale: Locale }) {
+  const c = capabilitiesContent[locale];
+  const [customizationCms, customizationCardsCms] = await Promise.all([
+    loadCmsSection("capabilities.customization"),
+    loadCmsCards("capabilities.customization"),
+  ]);
+
+  const cmsCustomizationGroups: CustomizationGroupShape[] | null =
+    customizationCardsCms.groups.length > 0
+      ? customizationCardsCms.groups.map((g) => {
+          const groupCards = customizationCardsCms.cards.filter(
+            (card) => card.group_id === g.id,
+          );
+          return {
+            title:
+              (locale === "en" ? g.title_en : g.title_zh) ??
+              g.title_en ??
+              g.title_zh ??
+              "",
+            items: groupCards.map((card) => {
+              const name = (locale === "en" ? card.title_en : card.title_zh) ?? "";
+              const note =
+                (locale === "en" ? card.description_en : card.description_zh) ??
+                undefined;
+              const image = cmsImageUrl(card.image_path) ?? undefined;
+              return { name, note: note || undefined, image };
+            }),
+          };
+        })
+      : null;
+
+  const customization = {
+    eyebrow:
+      pickField(customizationCms?.fields, "eyebrow", locale) ??
+      c.customization.eyebrow,
+    heading:
+      pickField(customizationCms?.fields, "heading", locale) ??
+      c.customization.heading,
+    body:
+      pickField(customizationCms?.fields, "body", locale) ??
+      c.customization.body,
+    groups: cmsCustomizationGroups ?? c.customization.groups,
+  };
+  const { hero, materials, moq, leadTime, qc, compliance, cta } = c;
   const placeholderLabel = uiContent[locale].placeholder.toBeProvided;
   const resolveHref = (href: string) => localePath(locale, href);
 

@@ -37,6 +37,12 @@ export default async function AdminGatedLayout({
               >
                 Inquiries
               </Link>
+              <Link
+                href="/admin/content"
+                className="rounded-md px-3 py-1.5 text-ink-600 hover:bg-sand-100 hover:text-ink-900"
+              >
+                Content
+              </Link>
             </nav>
           </div>
 
