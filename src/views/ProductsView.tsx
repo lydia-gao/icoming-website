@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { ProductCard } from "@/components/ProductCard";
 import { getLocalizedCategories } from "@/data/categories";
-import { getLocalizedProducts } from "@/data/products";
 import { uiContent } from "@/content/ui";
+import { getProductsForListPublic } from "@/lib/products-public";
 import { localePath, type Locale } from "@/lib/i18n";
 
-export function ProductsView({ locale }: { locale: Locale }) {
+export async function ProductsView({ locale }: { locale: Locale }) {
   const categories = getLocalizedCategories(locale);
-  const products = getLocalizedProducts(locale);
+  const products = await getProductsForListPublic(locale);
   const ui = uiContent[locale].productsPage;
 
   const categoryChip = (

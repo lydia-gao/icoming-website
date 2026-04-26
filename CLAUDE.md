@@ -47,13 +47,25 @@ magic-link deferred until custom SMTP is configured).
    `src/content/*.ts` remain the default; CMS rows override.
    Three tables + a public storage bucket (migration `0004_cms.sql`).
    Soft delete with restore UI; bilingual EN/ZH side-by-side editing.
+5. **Phase 6** — Product CMS V1. Sales-owned product catalog with
+   bilingual editing, status workflow (draft / published / archived),
+   tier pricing, variant arrays (sizes, colors, materials,
+   customization, specs, tags), and an image manager (upload,
+   reorder, set primary, alt text). Public catalog (`/products`,
+   `/categories/[slug]`, `/products/[slug]`, home featured grid)
+   reads DB published rows with per-surface static fallback.
+   Two tables (`products`, `product_images`), migration `0005_products.sql`.
+   One-time **"Migrate static catalog"** action seeds the existing
+   18 products as drafts. Slugs lock once a product is first
+   published.
 
 ## Not done (don't build unprompted)
 
-- **Phase 6** — admin-managed product catalog (DB-backed products,
-  CRUD UI, image uploads for product assets). Products still live in
-  `src/data/products.ts` until then. Note: do NOT extend the Phase 5
-  CMS into a page-builder — layout stays hardcoded.
+- **Phase 7+** — Category CMS (categories are intentionally still
+  static — only ~17 of them, slugs are SEO-sensitive). Add only if
+  sales explicitly asks. See `docs/PHASE-6-PRODUCTS.md` for the
+  reasoning. Do NOT extend the Phase 5 CMS into a page-builder —
+  layout stays hardcoded.
 - Operational items in [`docs/FUTURE-TODO.md`](docs/FUTURE-TODO.md):
   Resend domain verification, separate preview/prod Supabase
   projects, error monitoring, SEO polish, prod DB hardening.
@@ -72,9 +84,14 @@ magic-link deferred until custom SMTP is configured).
   `const zh: typeof en = { ... }` forces the compiler to enforce
   parity — adding a key to `en` without adding to `zh` fails the
   build. Respect that constraint.
-- `src/data/products.ts` and `src/data/categories.ts` keep English
-  as the source of truth; Chinese lives under `translations.zh` as
-  an optional overlay merged by `resolveProduct` / `resolveCategory`.
+- `src/data/categories.ts` keeps English as source of truth; Chinese
+  lives under `translations.zh` as an optional overlay merged by
+  `resolveCategory`.
+- `src/data/products.ts` is now a **fallback-only catalog** post
+  Phase 6 — DB-backed `products` table is canonical for any catalog
+  surface where sales has published rows. The static file remains
+  during the migration window for cold-DB rendering. See Product CMS
+  pattern below.
 - `src/content/ui.ts` holds shared UI strings (nav, buttons, form
   labels, metadata) also keyed by locale.
 - Never hardcode user-facing text in a component. Add it to the
@@ -166,9 +183,49 @@ for the full operator/dev guide. Key pieces:
 - `next.config.ts` whitelists `*.supabase.co/storage/v1/object/public/**`
   for `next/image`.
 
+**Product CMS V1 (Phase 6).** Same patterns as the Content CMS,
+extended to the product catalog. See
+[`docs/PHASE-6-PRODUCTS.md`](docs/PHASE-6-PRODUCTS.md) for the
+operator + dev guide. Key pieces:
+- Two tables: `products` (bilingual scalars + JSONB variant arrays
+  for `price_tiers` / `sizes` / `colors` / `materials` /
+  `customization` / `specs` / `tags`) and `product_images` (1:N,
+  position-ordered, `is_primary` flag with a partial unique index).
+  Migration `0005_products.sql`. Reuses the `cms-images` bucket.
+- Status workflow: `draft` (admin-only) → `published` (live) →
+  `archived` (soft-deleted). RLS hides non-published from public.
+  Slugs lock once a product is first published; revert to draft to
+  rename. No 308 redirects in V1.
+- Public reads via `src/lib/products-public.ts` —
+  `getProductsForListPublic` / `getProductsByCategoryPublic` /
+  `getProductBySlugPublic` / `getFeaturedProductsPublic`. Each falls
+  back to the static catalog when the DB is empty for the matching
+  surface (per-category granularity), so partial migrations stay
+  usable. The mapper `dbToProduct` reshapes the DB row into the
+  static `Product` type so view components don't change.
+- One-time **"Migrate static catalog"** action on `/admin/products`
+  (POST `/api/admin/products/migrate`) seeds all 18 static products
+  as drafts; image paths are stored as the existing `/images/...`
+  paths and resolve via `cmsImageUrl`'s pass-through. Sales replaces
+  images one at a time; static `src/data/products.ts` becomes dead
+  code once everyone is published, deletable then.
+- Image set saves are **atomic replace** — `PUT
+  /api/admin/products/[id]/images` deletes existing rows and inserts
+  the new set. Brief inconsistency window if the insert fails;
+  acceptable for admin volume.
+- Cache: `loadPublishedProducts` / `loadPublishedProductBySlug` are
+  wrapped in `unstable_cache` with the `"products"` tag. Admin writes
+  call `flushProductCaches(categorySlug?)` /
+  `flushProductDetailCache(slug)` from
+  `src/lib/products-revalidate.ts`.
+- Inquiry-flow safety is preserved by `inquiry_items` snapshots
+  (`product_name_snapshot`, `product_image_snapshot`, `price_snapshot`,
+  `variants` JSONB). Editing or archiving a product after submit
+  doesn't retroactively change historical RFQs.
+
 **Migrations are append-only.** Don't edit an already-applied SQL
-file. Add `0005_*.sql`, `0006_*.sql`. The four existing files
-(`0001`–`0004`) ran at various points in dev; structure new work
+file. Add `0006_*.sql`, `0007_*.sql`. The five existing files
+(`0001`–`0005`) ran at various points in dev; structure new work
 accordingly.
 
 ## Code conventions — prescriptive
@@ -263,7 +320,7 @@ accordingly.
 3. Create `.env.local` from `.env.example` with the Supabase URL +
    publishable + secret keys and the Resend API key.
 4. The Supabase project itself is pre-existing — migrations
-   `0001`-`0004` have already been applied there. No SQL to run on
+   `0001`-`0005` have already been applied there. No SQL to run on
    a fresh clone, just point env vars at the same project.
 5. `npm run dev`, visit `http://localhost:3000`.
 6. For admin: provision an auth user (Dashboard → Authentication →
@@ -274,8 +331,9 @@ accordingly.
 
 Full first-time setup (if the Supabase project is being recreated
 from scratch) lives in [`docs/PHASE-1-SETUP.md`](docs/PHASE-1-SETUP.md),
-[`docs/PHASE-4-ADMIN.md`](docs/PHASE-4-ADMIN.md), and
-[`docs/PHASE-5-CMS.md`](docs/PHASE-5-CMS.md).
+[`docs/PHASE-4-ADMIN.md`](docs/PHASE-4-ADMIN.md),
+[`docs/PHASE-5-CMS.md`](docs/PHASE-5-CMS.md), and
+[`docs/PHASE-6-PRODUCTS.md`](docs/PHASE-6-PRODUCTS.md).
 
 ## Don'ts
 

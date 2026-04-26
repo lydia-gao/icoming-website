@@ -2,15 +2,21 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProductCard } from "@/components/ProductCard";
 import { getCategoryBySlug } from "@/data/categories";
-import { getProductsByCategory } from "@/data/products";
 import { uiContent } from "@/content/ui";
+import { getProductsByCategoryPublic } from "@/lib/products-public";
 import { localePath, type Locale } from "@/lib/i18n";
 
-export function CategoryView({ slug, locale }: { slug: string; locale: Locale }) {
+export async function CategoryView({
+  slug,
+  locale,
+}: {
+  slug: string;
+  locale: Locale;
+}) {
   const category = getCategoryBySlug(slug, locale);
   if (!category) notFound();
 
-  const items = getProductsByCategory(slug, locale);
+  const items = await getProductsByCategoryPublic(slug, locale);
   const ui = uiContent[locale].categoryPage;
 
   return (

@@ -4,16 +4,27 @@ import { ProductCard } from "@/components/ProductCard";
 import { ProductGallery } from "@/components/ProductGallery";
 import { ProductVariantsPanel } from "@/components/ProductVariantsPanel";
 import { getCategoryBySlug } from "@/data/categories";
-import { getProductBySlug, getProductsByCategory } from "@/data/products";
 import { uiContent } from "@/content/ui";
+import {
+  getProductBySlugPublic,
+  getProductsByCategoryPublic,
+} from "@/lib/products-public";
 import { localePath, type Locale } from "@/lib/i18n";
 
-export function ProductDetailView({ slug, locale }: { slug: string; locale: Locale }) {
-  const product = getProductBySlug(slug, locale);
+export async function ProductDetailView({
+  slug,
+  locale,
+}: {
+  slug: string;
+  locale: Locale;
+}) {
+  const product = await getProductBySlugPublic(slug, locale);
   if (!product) notFound();
 
   const category = getCategoryBySlug(product.categorySlug, locale);
-  const related = getProductsByCategory(product.categorySlug, locale)
+  const related = (
+    await getProductsByCategoryPublic(product.categorySlug, locale)
+  )
     .filter((p) => p.slug !== product.slug)
     .slice(0, 3);
   const ui = uiContent[locale].productDetail;

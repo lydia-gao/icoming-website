@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { ProductDetailView } from "@/views/ProductDetailView";
-import { products, getProductBySlug } from "@/data/products";
+import { getProductBySlugPublic } from "@/lib/products-public";
 
 type Params = { slug: string };
 
-export async function generateStaticParams(): Promise<Params[]> {
-  return products.map((p) => ({ slug: p.slug }));
-}
+// Route is now dynamic: products are managed in the CMS, slugs may be
+// added or removed after build. The cached helpers (revalidate: 60s,
+// flushed on admin save) keep TTFB fast.
 
 export async function generateMetadata({
   params,
@@ -14,7 +14,7 @@ export async function generateMetadata({
   params: Promise<Params>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const product = getProductBySlug(slug, "zh");
+  const product = await getProductBySlugPublic(slug, "zh");
   if (!product) return {};
   return {
     title: product.name,

@@ -5,15 +5,15 @@ import { Marquee } from "@/components/Marquee";
 import { EditorialDuo } from "@/components/EditorialDuo";
 import { Placeholder } from "@/components/Placeholder";
 import { getLocalizedCategories } from "@/data/categories";
-import { getFeaturedProducts } from "@/data/products";
 import { homeContent, marqueeTiles } from "@/content/home";
 import { uiContent } from "@/content/ui";
 import { isPlaceholder } from "@/content/_types";
 import { loadCmsSection, pickField } from "@/lib/cms";
+import { getFeaturedProductsPublic } from "@/lib/products-public";
 import { localePath, type Locale } from "@/lib/i18n";
 
 export async function HomeView({ locale }: { locale: Locale }) {
-  const featured = getFeaturedProducts(4, locale);
+  const featured = await getFeaturedProductsPublic(4, locale);
   const featuredCategories = getLocalizedCategories(locale).slice(0, 8);
   const { hero: staticHero, heroMetrics, sections } = homeContent[locale];
   const heroCms = await loadCmsSection("home.hero");
